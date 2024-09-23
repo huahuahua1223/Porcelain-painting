@@ -36,7 +36,7 @@ const MyNFTs: NextPage = () => {
 
       await writeContractAsync({
         functionName: "mintItem",
-        args: [connectedAddress, uploadedItem.path],
+        args: [connectedAddress, uploadedItem.IpfsHash],
       });
     } catch (error) {
       notification.remove(notificationId);

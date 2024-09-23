@@ -1,16 +1,16 @@
 import { create } from "kubo-rpc-client";
 
-const PROJECT_ID = "2GajDLTC6y04qsYsoDRq9nGmWwK";
-const PROJECT_SECRET = "48c62c6b3f82d2ecfa2cbe4c90f97037";
-const PROJECT_ID_SECRECT = `${PROJECT_ID}:${PROJECT_SECRET}`;
+const pinataApiKey = "'ab1a2aade4e25af2c766';";
+const pinataSecretApiKey  = "'149cec1c3e77433af6ea3bdc11c3ba5ff0e349ea75d835efe6d476c8ffb88524';";
 
 export const ipfsClient = create({
-  host: "ipfs.infura.io",
-  port: 5001,
+  host: "api.pinata.cloud",
+  port: 443,
   protocol: "https",
   headers: {
-    Authorization: `Basic ${Buffer.from(PROJECT_ID_SECRECT).toString("base64")}`,
-  },
+    'pinata_api_key': pinataApiKey,
+    'pinata_secret_api_key': pinataSecretApiKey
+},
 });
 
 export async function getNFTMetadataFromIPFS(ipfsHash: string) {
