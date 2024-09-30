@@ -14,12 +14,25 @@ const CreateNFTPage: NextPage = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [attributes, setAttributes] = useState([{ trait_type: "", value: "" }]);
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
   // 处理文件上传
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     setFile(selectedFile);
+  };
+
+  // 更新属性
+  const handleAttributeChange = (index: number, field: string, value: string) => {
+    const newAttributes = [...attributes];
+    newAttributes[index] = { ...newAttributes[index], [field]: value };
+    setAttributes(newAttributes);
+  };
+  
+  // 添加新属性
+  const addNewAttribute = () => {
+    setAttributes([...attributes, { trait_type: "", value: "" }]);
   };
 
   // 处理铸造 NFT
@@ -33,6 +46,7 @@ const CreateNFTPage: NextPage = () => {
       name,
       description,
       image: URL.createObjectURL(file), // 本地预览使用
+      attributes,
     };
 
     const notificationId = notification.loading("Uploading metadata to IPFS...");
@@ -84,6 +98,31 @@ const CreateNFTPage: NextPage = () => {
       <div className="mb-4">
         <label className="block text-lg mb-2">Upload NFT Image</label>
         <input type="file" onChange={handleFileChange} />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-lg mb-2">Attributes</label>
+        {attributes.map((attribute, index) => (
+          <div key={index} className="flex space-x-2 mb-2">
+            <input
+              type="text"
+              placeholder="Trait Type"
+              value={attribute.trait_type}
+              onChange={(e) => handleAttributeChange(index, "trait_type", e.target.value)}
+              className="input input-bordered"
+            />
+            <input
+              type="text"
+              placeholder="Value"
+              value={attribute.value}
+              onChange={(e) => handleAttributeChange(index, "value", e.target.value)}
+              className="input input-bordered"
+            />
+          </div>
+        ))}
+        <button onClick={addNewAttribute} className="btn btn-secondary mt-2">
+          Add New Attribute
+        </button>
       </div>
 
       <div className="flex justify-center">
