@@ -5,10 +5,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = JSON.stringify(body);
     // 检查是否设置了 API key 和 secret
-    const pintaAPIKEY = process.env.PINTA_API_KEY;
-    const pintaAPISECRET = process.env.PINTA_API_SECRET;
+    const pinataAPIKEY = process.env.PINATA_API_KEY;
+    const pinataAPISECRET = process.env.PINATA_API_SECRET;
 
-    if (!pintaAPIKEY || !pintaAPISECRET) {
+    if (!pinataAPIKEY || !pinataAPISECRET) {
       return Response.json({ error: "API key or secret is not set in environment variables" }, { status: 400 });
     }
 
@@ -16,8 +16,8 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'pinata_api_key': pintaAPIKEY,
-        'pinata_secret_api_key': pintaAPISECRET,
+        'pinata_api_key': pinataAPIKEY,
+        'pinata_secret_api_key': pinataAPISECRET,
       },
       body: data,
     });

@@ -6,21 +6,39 @@ import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { addToIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
+import { uploadFileToIPFS, addToIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { MyHoldings } from "./_components";
 
 const CreateNFTPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [imageCID, setImageCID] = useState<string | null>(null); // 存储图片的 CID
   const [attributes, setAttributes] = useState([{ trait_type: "", value: "" }]);
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
   // 处理文件上传
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    const notificationId = notification.loading("Uploading image to IPFS...");
+    
+    try {
+      const uploadedFile = await uploadFileToIPFS(selectedFile);
+      notification.remove(notificationId);
+      
+      if (uploadedFile && uploadedFile.IpfsHash) {
+        setImageCID(uploadedFile.IpfsHash); // 将 IPFS CID 设置到状态
+        notification.success("Image uploaded to IPFS successfully!");
+      } else {
+        notification.error("Failed to upload image to IPFS.");
+      }
+    } catch (error) {
+      notification.remove(notificationId);
+      notification.error("Failed to upload image.");
+      console.error(error);
+    }
   };
 
   // 更新属性
@@ -37,7 +55,7 @@ const CreateNFTPage: NextPage = () => {
 
   // 处理铸造 NFT
   const handleMintItem = async () => {
-    if (!file || !name || !description) {
+    if (!imageCID  || !name || !description) {
       notification.error("Please provide all required information.");
       return;
     }
@@ -45,13 +63,13 @@ const CreateNFTPage: NextPage = () => {
     const metadata = {
       name,
       description,
-      image: URL.createObjectURL(file), // 本地预览使用
+      image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${imageCID}`, // 使用 IPFS 的 CID 链接
       attributes,
     };
 
     const notificationId = notification.loading("Uploading metadata to IPFS...");
     try {
-      // 上传到 IPFS
+      // 上传到 metadata 到IPFS
       const uploadedItem = await addToIPFS(metadata);
       notification.remove(notificationId);
       notification.success("Metadata uploaded to IPFS");
