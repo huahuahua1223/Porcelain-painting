@@ -22,11 +22,11 @@ type HeaderMenuLink = {
 };
 
 export const menuLinks: HeaderMenuLink[] = [
-  {
-    label: "My NFTs",
-    href: "/myNFTs",
-    icon: <PhotoIcon className="h-4 w-4" />,
-  },
+  // {
+  //   label: "My NFTs",
+  //   href: "/myNFTs",
+  //   icon: <PhotoIcon className="h-4 w-4" />,
+  // },
   {
     label: "Transfers",
     href: "/transfers",
@@ -50,6 +50,11 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "Create NFTs",
     href: "/create",
+    icon: <PhotoIcon className="h-4 w-4" />,
+  },
+  {
+    label: "List NFTs",
+    href: "/listNFTs",
     icon: <PhotoIcon className="h-4 w-4" />,
   },
 ];
@@ -118,11 +123,11 @@ export const Header = () => {
         </div>
         <Link href="/" passHref className="hidden xl:flex items-center gap-1 ml-4 mr-6 shrink-0">
           <div className="flex relative w-10 h-10">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/logo.svg" />
+            <Image alt="SE2 logo" className="cursor-pointer" fill src="/wx.jpg" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold leading-tight">SRE Challenges</span>
-            <span className="text-xs">#0: Simple NFT</span>
+            <span className="font-bold leading-tight">huahua</span>
+            <span className="text-xs">Simple NFT</span>
           </div>
         </Link>
         <ul className="hidden xl:flex xl:flex-nowrap menu menu-horizontal px-1 gap-2">

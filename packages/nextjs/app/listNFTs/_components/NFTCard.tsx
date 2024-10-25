@@ -24,7 +24,7 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
 
       const tx = await writeContractAsync({
         functionName: "listItem",
-        args: [BigInt(nft.id), formattedPrice],
+        args: [nft.id, formattedPrice],
         value: listingFee, // 发送手续费
       });
 
