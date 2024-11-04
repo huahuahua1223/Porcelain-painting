@@ -4,6 +4,7 @@ pragma solidity ^0.8.2; //Do not change the solidity version as it negatively im
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; // 实现 ERC721
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol"; // 实现 ERC721Enumerable
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; // 存储 tokenURI
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol"; // 实现 EIP-2981 标准
 import "@openzeppelin/contracts/access/Ownable.sol"; // 用于控制合约的权限
 import "@openzeppelin/contracts/utils/Counters.sol"; // 用于生成递增的 tokenId
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; // 防止重入攻击
@@ -12,13 +13,14 @@ contract YourCollectible is
 	ERC721,
 	ERC721Enumerable,
 	ERC721URIStorage,
+    ERC721Royalty,
 	Ownable,
     ReentrancyGuard
 {
 	using Counters for Counters.Counter;
 
 	Counters.Counter public tokenIdCounter;
-	uint256 public listingFee = 25; // 上架费用，25 wei
+	uint256 public listingFee = 0.025 ether; // 上架费用，0.025 eth = 25000000000000000 wei
 	
 	struct NFTItem {
         uint256 tokenId;
@@ -30,6 +32,14 @@ contract YourCollectible is
 	
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
 
+    // 事件
+    event NftListed(
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price
+    );
+    event NftBought(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price, address royaltyReceiver, uint256 royaltyAmount);
+
 	constructor() ERC721("YourCollectible", "YCB") {}
 
 	function _baseURI() internal pure override returns (string memory) {
@@ -37,11 +47,14 @@ contract YourCollectible is
 	}
 
 	// 铸造NFT
-	function mintItem(address to, string memory uri) public returns (uint256) {
+	function mintItem(address to, string memory uri, uint96 royaltyFeeNumerator) public returns (uint256) {
 		tokenIdCounter.increment();
 		uint256 tokenId = tokenIdCounter.current();
 		_safeMint(to, tokenId);
 		_setTokenURI(tokenId, uri);
+
+        // 设置版税信息, 版税比例royaltyFeeNumerator：250 for 2.5%, 500 for 5%, 1000 for 10%
+        _setTokenRoyalty(tokenId, to, royaltyFeeNumerator);
 
 		// 完整的 tokenURI
         string memory completeTokenURI = string(abi.encodePacked(_baseURI(), uri));
@@ -67,14 +80,18 @@ contract YourCollectible is
 		// 将上架费用转给合约拥有者
         payable(owner()).transfer(listingFee);
 
-        // 转移NFT到合约
+        // 转移NFT到合约，并授权合约可以转移NFT
         _transfer(msg.sender, address(this), tokenId);
+        // approve(address(this), tokenId);
+        // setApprovalForAll(address(this), true);
 
         // 更新NFT信息
         nftItems[tokenId].isListed = true;
         nftItems[tokenId].price = price;
         nftItems[tokenId].owner = payable(msg.sender);
 		nftItems[tokenId].tokenUri = tokenURI(tokenId);
+
+        emit NftListed(tokenId, msg.sender, price);
     }
 
     // 购买NFT
@@ -82,18 +99,41 @@ contract YourCollectible is
         NFTItem storage item = nftItems[tokenId];
         require(item.isListed, "NFT is not listed");
         require(msg.value == item.price, "Incorrect price");
-		
-		// 更新NFT信息
-        item.isListed = false;
-        item.owner = payable(msg.sender);
 
-        // 转移资金给卖家，扣除上架费用
-        // item.owner.transfer(sellerProceeds);
-		(bool success, ) = item.owner.call{value: msg.value}("");
+        item.isListed = false;
+
+        uint256 royaltyAmount = 0;
+        address royaltyReceiver;
+
+        // 获取版税接受者地址
+        (royaltyReceiver, ) = royaltyInfo(tokenId, msg.value);
+
+        // 如果当前卖家是铸造者，则不收取版税
+        if (item.owner != royaltyReceiver) {
+            (royaltyReceiver, royaltyAmount) = royaltyInfo(tokenId, msg.value);
+            if (royaltyAmount > 0) {
+                (bool royaltySuccess, ) = payable(royaltyReceiver).call{value: royaltyAmount}("");
+                require(royaltySuccess, "Transfer to royalty receiver failed");
+            }
+        }
+		
+        // 记录卖家的地址和价格用以事件记录
+        address payable seller = item.owner;
+        uint256 price = item.price;
+
+		// 更新NFT信息
+        item.owner = payable(msg.sender);
+        item.price = 0;
+
+        // 计算卖家应得金额并转账
+        uint256 sellerAmount = msg.value - royaltyAmount;
+		(bool success, ) = seller.call{value: sellerAmount}("");
         require(success, "Transfer to seller failed");
 
-        // 将NFT转移给买家
+        // 将NFT转移给买家,调用transferFrom函数不为"from"账户
         _transfer(address(this), msg.sender, tokenId);
+
+        emit NftBought(tokenId, seller, msg.sender, price, royaltyReceiver, royaltyAmount);
     }
 
 	// 获取所有上架的NFT
@@ -146,7 +186,7 @@ contract YourCollectible is
 
 	function _burn(
 		uint256 tokenId
-	) internal override(ERC721, ERC721URIStorage) {
+	) internal override(ERC721, ERC721URIStorage, ERC721Royalty) {
 		super._burn(tokenId); // 调用父类的销毁函数
 	}
 
@@ -161,7 +201,7 @@ contract YourCollectible is
 	)
 		public
 		view
-		override(ERC721, ERC721Enumerable, ERC721URIStorage)
+		override(ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty)
 		returns (bool)
 	{
 		return super.supportsInterface(interfaceId); // 检查接口支持

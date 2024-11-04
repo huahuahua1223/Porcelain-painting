@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     YourCollectible: {
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      address: "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
       abi: [
         {
           inputs: [],
@@ -94,6 +94,74 @@ const deployedContracts = {
             },
           ],
           name: "MetadataUpdate",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "buyer",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "royaltyReceiver",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "royaltyAmount",
+              type: "uint256",
+            },
+          ],
+          name: "NftBought",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+          ],
+          name: "NftListed",
           type: "event",
         },
         {
@@ -362,6 +430,11 @@ const deployedContracts = {
               name: "uri",
               type: "string",
             },
+            {
+              internalType: "uint96",
+              name: "royaltyFeeNumerator",
+              type: "uint96",
+            },
           ],
           name: "mintItem",
           outputs: [
@@ -463,6 +536,35 @@ const deployedContracts = {
           name: "renounceOwnership",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "salePrice",
+              type: "uint256",
+            },
+          ],
+          name: "royaltyInfo",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -700,34 +802,36 @@ const deployedContracts = {
       ],
       inheritedFunctions: {
         approve:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         balanceOf:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         getApproved:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         isApprovedForAll:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        name: "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
+        name: "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         ownerOf:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         safeTransferFrom:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         setApprovalForAll:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         supportsInterface:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         symbol:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         tokenURI:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         transferFrom:
-          "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         tokenByIndex:
           "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
         tokenOfOwnerByIndex:
           "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
         totalSupply:
           "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
+        royaltyInfo:
+          "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol",
         owner: "@openzeppelin/contracts/access/Ownable.sol",
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",

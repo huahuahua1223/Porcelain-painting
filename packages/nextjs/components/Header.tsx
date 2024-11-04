@@ -43,18 +43,18 @@ export const menuLinks: HeaderMenuLink[] = [
     icon: <ArrowDownTrayIcon className="h-4 w-4" />,
   },
   {
-    label: "Debug Contracts",
+    label: "调试合约",
     href: "/debug",
     icon: <BugAntIcon className="h-4 w-4" />,
   },
   {
-    label: "Create NFTs",
+    label: "铸造NFT",
     href: "/create",
     icon: <PhotoIcon className="h-4 w-4" />,
   },
   {
-    label: "List NFTs",
-    href: "/listNFTs",
+    label: "NFT市场",
+    href: "/market",
     icon: <PhotoIcon className="h-4 w-4" />,
   },
 ];
