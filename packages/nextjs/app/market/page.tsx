@@ -8,28 +8,30 @@ import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaf
 import { notification } from "~~/utils/scaffold-eth";
 import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
+import { formatEther } from "viem"; 
+import Link from "next/link";
 
 const ListNFTsPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [listedNFTs, setListedNFTs] = useState<any[]>([]);
   const [nftDetails, setNftDetails] = useState<Record<number, NFTMetaData | null>>({});
 
-  // 合约读取和写入的hook
-  const { data: nftsData } = useScaffoldReadContract({
+  // 获取所有上架的 NFT
+  const { data: onSaleNfts } = useScaffoldReadContract({
     contractName: "YourCollectible",
     functionName: "getAllListedItems",
+    watch: true,
   });
-
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
   useEffect(() => {
-    if (nftsData) {
-      setListedNFTs(nftsData);
-      nftsData.forEach((nft: any) => {
+    if (onSaleNfts) {
+      setListedNFTs(onSaleNfts);
+      onSaleNfts.forEach((nft: any) => {
         fetchNFTDetails(nft.tokenUri, nft.tokenId); // 获取每个NFT的详细信息
       });
     }
-  }, [nftsData]);
+  }, [onSaleNfts]);
 
   // 获取NFT详细信息的函数
   const fetchNFTDetails = async (tokenUri: string, tokenId: number) => {
@@ -54,13 +56,12 @@ const ListNFTsPage: NextPage = () => {
     const formattedPrice = BigInt(price);
 
     try {
-      const tx = await writeContractAsync({
+      await writeContractAsync({
         functionName: "buyItem",
         args: [BigInt(tokenId)],
         value: formattedPrice,
       });
 
-      await tx.wait(); // 等待交易完成
       notification.success("NFT purchased successfully!");
     } catch (error) {
       notification.error("Failed to purchase NFT.");
@@ -79,6 +80,7 @@ const ListNFTsPage: NextPage = () => {
         {listedNFTs.length > 0 ? (
           listedNFTs.map((nft, index) => {
             const metadata = nftDetails[nft.tokenId];
+            const priceETH = formatEther(nft.price);
 
             return (
               <div key={index} className="card w-96 bg-base-100 shadow-xl">
@@ -87,12 +89,13 @@ const ListNFTsPage: NextPage = () => {
                     src={metadata?.image || "/placeholder.png"} // 使用元数据中的image字段
                     alt={metadata?.name || "NFT Image"}
                     className="w-full h-60 object-cover"
+                    // onClick={() => handleViewNFTDetails(nft.tokenId)} // 点击跳转到详情页面
                   />
                 </figure>
                 <div className="card-body">
-                  <h2 className="card-title">{metadata?.name || "Unnamed NFT"}</h2>
-                  <p>{metadata?.description || "No description available."}</p>
-                  <p className="text-gray-500">Price: {Number(nft.price)} wei</p>
+                  <h2 className="card-title">名字：{metadata?.name || "Unnamed NFT"}</h2>
+                  <p>描述：{metadata?.description || "No description available."}</p>
+                  <p className="text-gray-500">Price: {Number(priceETH)} ETH</p>
                   
                   {/* 显示NFT属性 */}
                   {metadata?.attributes && (
@@ -112,12 +115,19 @@ const ListNFTsPage: NextPage = () => {
                     {!isConnected || isConnecting ? (
                       <RainbowKitCustomConnectButton />
                     ) : (
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
-                      >
-                        Buy NFT
-                      </button>
+                        <>
+                          <Link href={`/market/nftDetail/${nft.tokenId}`} passHref>
+                            <button className="btn btn-secondary">
+                              View Details
+                            </button>
+                          </Link>
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
+                          >
+                            Buy NFT
+                          </button>
+                        </>
                     )}
                   </div>
                 </div>

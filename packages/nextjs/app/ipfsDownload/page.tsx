@@ -43,7 +43,7 @@ const IpfsDownload: NextPage = () => {
         <div className={`flex border-2 border-accent/95 bg-base-200 rounded-full text-accent w-96`}>
           <input
             className="input input-ghost focus:outline-none focus:bg-transparent focus:text-secondary-content h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-accent/50 text-secondary-content/75"
-            placeholder="IPFS CID"
+            placeholder="IPFS tokenURI"
             value={ipfsPath}
             onChange={e => setIpfsPath(e.target.value)}
             autoComplete="off"

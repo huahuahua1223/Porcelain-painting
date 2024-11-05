@@ -15,6 +15,7 @@ const CreateNFTPage: NextPage = () => {
   const [description, setDescription] = useState("");
   const [imageCID, setImageCID] = useState<string | null>(null); // 存储图片的 CID
   const [attributes, setAttributes] = useState([{ trait_type: "", value: "" }]);
+  const [royaltyFee, setRoyaltyFee] = useState(250); // 新增的状态，用于存储版税费率
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
   // 处理文件上传
@@ -77,7 +78,7 @@ const CreateNFTPage: NextPage = () => {
       // 调用智能合约铸造 NFT
       await writeContractAsync({
         functionName: "mintItem",
-        args: [connectedAddress, uploadedItem.IpfsHash],
+        args: [connectedAddress, uploadedItem.IpfsHash, royaltyFee],
       });
 
       notification.success("NFT Minted successfully!");
@@ -141,6 +142,20 @@ const CreateNFTPage: NextPage = () => {
         <button onClick={addNewAttribute} className="btn btn-secondary mt-2">
           Add New Attribute
         </button>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-lg mb-2">Royalty Fee</label>
+        <input
+          type="number"
+          value={royaltyFee}
+          onChange={(e) => setRoyaltyFee(Number(e.target.value))}
+          className="input input-bordered"
+          placeholder="Enter Royalty Fee (e.g. 250 for 2.5%)"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Note: 250 corresponds to 2.5%, 500 is 5%, 1000 is 10%, etc.
+        </p>
       </div>
 
       <div className="flex justify-center">

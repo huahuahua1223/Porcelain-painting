@@ -25,7 +25,7 @@ const IpfsUpload: NextPage = () => {
       notification.remove(notificationId);
       notification.success("Uploaded to IPFS");
 
-      setUploadedIpfsPath(uploadedItem.path);
+      setUploadedIpfsPath(uploadedItem.IpfsHash);
     } catch (error) {
       notification.remove(notificationId);
       notification.error("Error uploading to IPFS");
@@ -68,8 +68,8 @@ const IpfsUpload: NextPage = () => {
         </button>
         {uploadedIpfsPath && (
           <div className="mt-4">
-            <a href={`https://ipfs.io/ipfs/${uploadedIpfsPath}`} target="_blank" rel="noreferrer">
-              {`https://ipfs.io/ipfs/${uploadedIpfsPath}`}
+            <a href={`https://aqua-famous-koala-370.mypinata.cloud/ipfs/${uploadedIpfsPath}`} target="_blank" rel="noreferrer">
+              {`https://aqua-famous-koala-370.mypinata.cloud/ipfs/${uploadedIpfsPath}`}
             </a>
           </div>
         )}
