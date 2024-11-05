@@ -3,14 +3,15 @@ import { Collectible } from "./MyHoldings";
 import { Address, AddressInput } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { parseEther } from "viem";
-import { Ether } from "@uniswap/sdk-core";
+import { parseEther, formatEther } from "viem";
 
 export const NFTCard = ({ nft }: { nft: Collectible }) => {
   const [transferToAddress, setTransferToAddress] = useState("");
   const [isListed, setIsListed] = useState(false);
   const [price, setPrice] = useState<string>(""); // 用于存储用户输入的价格
   const [loading, setLoading] = useState(false); // 控制上架按钮的加载状态
+  const [isSecondHand, setIsSecondHand] = useState(false); // 检查是否二手交易
+  const [royaltyAmount, setRoyaltyAmount] = useState<string>("0"); // 版税费用
 
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
   const { data: yourCollectibleContract } = useScaffoldContract({
@@ -24,6 +25,12 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
     watch: true,
   });
 
+  const { data: mintedBy } = useScaffoldReadContract({
+    contractName: "YourCollectible",
+    functionName: "getMintedBy",
+    args: [BigInt(nft.id.toString())],
+  });
+
   useEffect(() => {
     if (nftItem) {
       setIsListed(nftItem.isListed as boolean);
@@ -32,7 +39,41 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
       setIsListed(false);
       setPrice("");
     }
-  }, [nftItem]);
+
+    // 检查是否是二手交易
+    if (mintedBy && mintedBy !== nft.owner) {
+      setIsSecondHand(true); // 如果铸造者与当前拥有者不同，则视为二手交易
+    } else {
+      setIsSecondHand(false);
+    }
+  }, [nftItem, mintedBy]);
+
+  // 计算版税金额
+  const calculateRoyalty = async (price: string) => {
+    if (isSecondHand) {
+      const priceWei = parseEther(price);
+      console.log("tokenId:", nft.id)
+      console.log("价格 wei:", priceWei)
+      try {
+        // 调用 yourCollectibleContract 合约的 royaltyInfo 方法来获取版税信息
+        const royaltyInfoResult = await yourCollectibleContract?.read.royaltyInfo([BigInt(nft.id), priceWei]);
+
+        if (royaltyInfoResult) {
+          // 将 readonly 数组转换为普通数组，然后解构
+          const [royaltyReceiver, royaltyAmount] = Array.from(royaltyInfoResult);
+  
+          console.log("royaltyReceiver:", royaltyReceiver);
+          console.log("royaltyAmount:", royaltyAmount);
+  
+          setRoyaltyAmount(royaltyAmount.toString());
+        }
+      } catch (error) {
+        console.error("获取版税信息失败:", error);
+      }
+    } else {
+      setRoyaltyAmount("0");
+    }
+  };
 
   // 上架
   const handleListNFT = async () => {
@@ -106,27 +147,6 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
           <span className="text-lg font-semibold">Owner : </span>
           <Address address={nft.owner as `0x${string}`} />
         </div>
-
-        {/* 上架功能 */}
-        {/* <div className="flex flex-col my-2 space-y-1">
-          <span className="text-lg font-semibold mb-1">Price (ETH): </span>
-          <input
-            type="text"
-            value={price}
-            onChange={e => setPrice(e.target.value)}
-            placeholder="Enter price in Wei"
-            className="input input-bordered"
-          />
-        </div>
-        <div className="card-actions justify-end space-x-3">
-          <button
-            className="btn btn-primary btn-md px-8 tracking-wide"
-            onClick={handleListNFT}
-            disabled={loading}
-          >
-            {loading ? "Listing..." : "List NFT"}
-          </button>
-        </div> */}
         
         {/* 转移功能 */}
         <div className="flex flex-col my-2 space-y-1">
@@ -167,10 +187,20 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
               />
               <button
                 className="btn btn-primary btn-sm px-4 py-1"
-                onClick={handleListNFT}
+                onClick={() => {
+                  calculateRoyalty(price); // 计算版税
+                  handleListNFT();
+                }}
               >
                 上架
               </button>
+            </div>
+          )}
+
+          {/* 二手交易提醒 */}
+          {isSecondHand && royaltyAmount !== "0" && (
+            <div className="alert alert-warning my-2">
+              <span>注意: 这是二手交易，一笔版税费为 {formatEther(royaltyAmount)} ETH 将被扣除</span>
             </div>
           )}
 

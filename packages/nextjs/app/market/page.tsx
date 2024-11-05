@@ -10,11 +10,13 @@ import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
 import { formatEther } from "viem"; 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const ListNFTsPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [listedNFTs, setListedNFTs] = useState<any[]>([]);
   const [nftDetails, setNftDetails] = useState<Record<number, NFTMetaData | null>>({});
+  const router = useRouter();
 
   // 获取所有上架的 NFT
   const { data: onSaleNfts } = useScaffoldReadContract({
@@ -71,6 +73,11 @@ const ListNFTsPage: NextPage = () => {
     }
   };
 
+  // 跳转到详情页
+  const handleViewNFTDetails = (tokenId: number) => {
+    router.push(`/market/nftDetail/${tokenId}`);
+  };
+
   return (
     <div className="flex flex-col items-center pt-10">
       <h1 className="text-4xl font-bold mb-8">Available NFTs</h1>
@@ -89,16 +96,16 @@ const ListNFTsPage: NextPage = () => {
                     src={metadata?.image || "/placeholder.png"} // 使用元数据中的image字段
                     alt={metadata?.name || "NFT Image"}
                     className="w-full h-60 object-cover"
-                    // onClick={() => handleViewNFTDetails(nft.tokenId)} // 点击跳转到详情页面
+                    onClick={() => handleViewNFTDetails(nft.tokenId)} // 点击跳转到详情页面
                   />
                 </figure>
                 <div className="card-body">
-                  <h2 className="card-title">名字：{metadata?.name || "Unnamed NFT"}</h2>
-                  <p>描述：{metadata?.description || "No description available."}</p>
-                  <p className="text-gray-500">Price: {Number(priceETH)} ETH</p>
+                  <h2 className="card-title">{metadata?.name || "Unnamed NFT"}</h2>
+                  {/* <p>描述：{metadata?.description || "No description available."}</p> */}
+                  <p className="text-gray-500">{Number(priceETH)} ETH</p>
                   
                   {/* 显示NFT属性 */}
-                  {metadata?.attributes && (
+                  {/* {metadata?.attributes && (
                     <div className="mb-2">
                       <h3 className="font-semibold">Attributes:</h3>
                       <ul>
@@ -109,7 +116,7 @@ const ListNFTsPage: NextPage = () => {
                         ))}
                       </ul>
                     </div>
-                  )}
+                  )} */}
 
                   <div className="card-actions justify-end">
                     {!isConnected || isConnecting ? (

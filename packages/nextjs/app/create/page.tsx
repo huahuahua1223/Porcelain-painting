@@ -124,9 +124,24 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         />
       </div>
 
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <label className="block text-lg mb-2">Upload NFT Image</label>
         <input type="file" onChange={handleFileChange} />
+      </div> */}
+      <div className="mb-4">
+        <label className="block text-lg mb-2">Upload NFT Image</label>
+        <div className="flex items-center justify-center">
+          <label htmlFor="file-upload" className="btn btn-primary w-auto cursor-pointer">
+            Choose Image
+          </label>
+          <input
+            type="file"
+            id="file-upload"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          {imageCID && <span className="ml-4 text-gray-500">File selected</span>}
+        </div>
       </div>
 
       <div className="mb-4">

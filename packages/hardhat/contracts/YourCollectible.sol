@@ -31,6 +31,7 @@ contract YourCollectible is
     }
 	
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
+	mapping(uint256 => address) public mintedBy; // 保存每个NFT的铸造者
 
     // 事件
     event NftListed(
@@ -56,6 +57,9 @@ contract YourCollectible is
         // 设置版税信息, 版税比例royaltyFeeNumerator：250 for 2.5%, 500 for 5%, 1000 for 10%
         _setTokenRoyalty(tokenId, to, royaltyFeeNumerator);
 
+        // 保存铸造者信息
+		mintedBy[tokenId] = to;
+
 		// 完整的 tokenURI
         string memory completeTokenURI = string(abi.encodePacked(_baseURI(), uri));
 
@@ -69,6 +73,11 @@ contract YourCollectible is
         });
 		
 		return tokenId;
+	}
+
+    // 获取NFT的铸造者
+	function getMintedBy(uint256 tokenId) public view returns (address) {
+		return mintedBy[tokenId];
 	}
 
 	// 上架NFT

@@ -8,9 +8,11 @@ import { formatEther } from "viem";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
 import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const { tokenId } = params;
+    const router = useRouter();
     const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
     const [nftMetadata, setNftMetadata] = useState<NFTMetaData | null>(null);
 
@@ -78,132 +80,132 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         )
 
     return (
-        <>
-            {/* NFT 详情 */}
-            <div className="flex justify-center mt-10">
-                <div className="w-full max-w-screen-lg flex flex-col lg:flex-row items-center lg:items-start px-4">
-                    {/* 图片部分 */}
-                    <div className="flex-1 lg:w-1/3 mb-8 lg:mb-0">
-                        {nftMetadata ? (
-                            <img src={nftMetadata.image} alt={nftMetadata.name} className="w-full h-auto rounded-lg" />
-                        ) : (
-                            <div>无法加载 NFT 图片</div>
-                        )}
+        <div className="container mx-auto mt-10 mb-20 px-10 md:px-0">
+            <button className="btn btn-sm btn-primary" onClick={() => router.back()}>
+                Back
+            </button>
+
+{/* 详情 */}
+<div className="overflow-x-auto mt-10">
+    <h2 className="text-3xl font-bold mb-4 text-center text-primary-content">NFT Details</h2>
+
+    <div className="flex flex-col md:flex-row items-center md:items-stretch gap-10">
+        {/* 图片部分 */}
+        <div className="flex-shrink-0 w-full md:w-1/3 h-full">
+            <div className="relative w-full h-full bg-gray-200 rounded-lg overflow-hidden">
+                {nftMetadata ? (
+                    <img 
+                        src={nftMetadata.image} 
+                        alt={nftMetadata.name} 
+                        className="object-cover w-full h-full rounded-lg"
+                    />
+                ) : (
+                    <div className="flex justify-center items-center h-full text-gray-500">Loading...</div>
+                )}
+            </div>
+        </div>
+
+        {/* 详细信息部分 */}
+        <div className="flex flex-col w-full md:w-2/3 h-full">
+            <div className="bg-base-100 p-6 rounded-lg shadow-lg w-full h-full">
+                <div className="text-xl font-semibold mb-4">
+                    <p><strong>名称:</strong> {nftMetadata?.name ?? "No name available."}</p>
+                    <p><strong>描述:</strong> {nftMetadata?.description ?? "No description available."}</p>
+                </div>
+
+                {/* 属性列表 */}
+                <div className="mb-6">
+                    <strong>属性:</strong>
+                    <div className="grid grid-cols-1 gap-4 mt-4">
+                        {nftMetadata?.attributes?.map((attribute, index) => (
+                            <div key={index} className="p-4 bg-base-200 rounded-lg shadow-sm">
+                                <div className="font-semibold">{attribute.trait_type}</div>
+                                <div>{attribute.value}</div>
+                            </div>
+                        ))}
                     </div>
+                </div>
 
-                    {/* 信息部分 */}
-                    <div className="flex-1 lg:w-2/3 lg:ml-10">
-                        {nftMetadata ? (
-                            <div className="text-center lg:text-left">
-                                <h2 className="text-3xl font-bold">名称：{nftMetadata.name}</h2>
-                                <p className="mt-2 text-gray-600">描述：{nftMetadata.description}</p>
-                                <div className="mt-4">
-                                    <h3 className="text-xl">属性:</h3>
-                                    <ul>
-                                        {nftMetadata.attributes?.map((attribute, index) => (
-                                            <li key={index}>
-                                                {attribute.trait_type}: {attribute.value}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        ) : (
-                            <div>无法加载 NFT 元数据</div>
-                        )}
-
-                        {/* 基本信息 */}
-                        <div className="mt-10 text-lg">
-                            <h2 className="text-2xl">NFT 基本信息</h2>
-                            <p>Token ID: {tokenId}</p>
-                            <p>价格: {formatEther(nftData?.price ?? 0n)} ETH</p>
-                            <p>拥有者: <Address address={nftData?.owner} /></p>
-                            <p>是否上架: {nftData?.isListed ? "是" : "否"}</p>
-
-                            {/* 购买按钮 */}
-                            <div className="mt-4">
-                                {nftData?.isListed ? (
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => handleBuyNFT(Number(tokenId), Number(nftData?.price))}
-                                    >
-                                        购买 NFT
-                                    </button>
-                                ) : (
-                                    <p className="text-red-500 mt-2">该NFT未上架出售</p>
-                                )}
-                            </div>
-
-                        </div>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <strong>Token ID:</strong> {tokenId}
+                    </div>
+                    <div>
+                        <strong>价格:</strong> {formatEther(nftData?.price ?? 0n)} ETH
+                    </div>
+                    <div>
+                        <strong>拥有者:</strong> <Address address={nftData?.owner} />
+                    </div>
+                    <div>
+                        <strong>是否上架:</strong> {nftData?.isListed ? "是" : "否"}
                     </div>
                 </div>
             </div>
 
+            <div className="mt-6">
+                {nftData?.isListed ? (
+                    <button
+                        className="btn btn-primary w-full"
+                        onClick={() => handleBuyNFT(Number(tokenId), Number(nftData?.price))}
+                    >
+                        购买 NFT
+                    </button>
+                ) : (
+                    <p className="text-red-500 mt-2 text-center">该NFT未上架出售</p>
+                )}
+            </div>
+        </div>
+    </div>
+</div>
 
-            {/* 历史记录 */}
-            <div className="flex items-center flex-col flex-grow pt-10">
-                <div className="px-5">
-                    <h1 className="text-center mb-8">
-                        <span className="block text-4xl font-bold">买卖记录</span>
-                    </h1>
-                </div>
-                <div className="overflow-x-auto shadow-lg">
-                    <table className="table table-zebra w-full">
-                        <thead>
+{/* 历史记录 */}
+            <div className="overflow-x-auto mt-10">
+                <h2 className="text-3xl font-bold mb-4 text-center text-primary-content">买卖记录</h2>
+                <table className="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Token ID</th>
+                            <th>卖家</th>
+                            <th>买家</th>
+                            <th>成交价格 (ETH)</th>
+                            <th>购买时间</th>
+                            <th>版税收取人</th>
+                            <th>版税额 (ETH)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {!buyEvents || buyEvents.length === 0 ? (
                             <tr>
-                                <th className="bg-primary">Token ID</th>
-                                <th className="bg-primary">卖家</th>
-                                <th className="bg-primary">买家</th>
-                                <th className="bg-primary">成交价格 (ETH)</th>
-                                <th className="bg-primary">购买时间</th>
-                                <th className="bg-primary">版税收取人</th>
-                                <th className="bg-primary">版税额 (ETH)</th>
+                                <td colSpan={7} className="text-center">
+                                    No transaction history available.
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {!buyEvents || buyEvents.length === 0 ? (
-                                <tr>
-                                    <td colSpan={3} className="text-center">
-                                        还没有NFT买卖
-                                    </td>
-                                </tr>
-                            ) : (
-                                buyEvents?.map((event, index) => {
-                                    const tokenId = event.args.tokenId?.toString() ?? "N/A";
-                                    const seller = event.args.seller ?? "N/A";
-                                    const buyer = event.args.buyer ?? "N/A";
-                                    const priceInWei = event.args.price ?? 0n;
-                                    const priceInEth = formatEther(priceInWei); // 使用viem的 formatEther 方法从wei转换为ETH
-                                    const blocktimestamp = event.block?.timestamp;
-                                    const timestamp = blocktimestamp ? format(new Date(Number(blocktimestamp) * 1000), "yyyy-MM-dd HH:mm:ss") : "N/A";
-                                    const royaltyReceiver = event.args.royaltyReceiver ?? "N/A";
-                                    const royaltyAmountInWei = event.args.royaltyAmount ?? 0n;
-                                    const royaltyAmountInEth = formatEther(royaltyAmountInWei);// 使用viem的 formatEther 方法从wei转换为ETH
+                        ) : (
+                            buyEvents?.map((event, index) => {
+                                const priceInWei = event.args.price ?? 0n;
+                                const priceInEth = formatEther(priceInWei);
+                                const blocktimestamp = event.block?.timestamp;
+                                const timestamp = blocktimestamp ? format(new Date(Number(blocktimestamp) * 1000), "yyyy-MM-dd HH:mm:ss") : "N/A";
+                                const royaltyAmountInWei = event.args.royaltyAmount ?? 0n;
+                                const royaltyAmountInEth = formatEther(royaltyAmountInWei);
 
-                                    return (
-                                        <tr key={index}>
-                                            <td className="text-center">{tokenId}</td>
-                                            <td>
-                                                <Address address={seller as `0x${string}` | undefined} />
-                                            </td>
-                                            <td>
-                                                <Address address={buyer as `0x${string}` | undefined} />
-                                            </td>
-                                            <td className="text-center">{priceInEth}</td>
-                                            <td className="text-center">{timestamp}</td>
-                                            <td>
-                                                <Address address={royaltyReceiver as `0x${string}` | undefined} />
-                                            </td>
-                                            <td className="text-center">{royaltyAmountInEth}</td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                return (
+                                    <tr key={index}>
+                                        <td>{event.args.tokenId?.toString() ?? "N/A"}</td>
+                                        <td><Address address={event.args.seller as `0x${string}` | undefined} /></td>
+                                        <td><Address address={event.args.buyer as `0x${string}` | undefined} /></td>
+                                        <td>{priceInEth}</td>
+                                        <td>{timestamp}</td>
+                                        <td><Address address={event.args.royaltyReceiver as `0x${string}` | undefined} /></td>
+                                        <td>{royaltyAmountInEth}</td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
             </div>
-        </>
+        </div>
     );
 
 };
