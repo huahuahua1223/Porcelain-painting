@@ -89,6 +89,16 @@ const CreateNFTPage: NextPage = () => {
     }
   };
 
+  // 更新版税费率的处理函数
+const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = Number(e.target.value);
+  if (value <= 1000) {
+    setRoyaltyFee(value); // 只有当值不超过1000时才更新
+  } else {
+    notification.error("版税不能超过10%~");
+  }
+};
+
   return (
     <div className="flex flex-col items-center pt-10">
       <h1 className="text-4xl font-bold mb-8">Create & Mint Your NFT</h1>
@@ -149,7 +159,7 @@ const CreateNFTPage: NextPage = () => {
         <input
           type="number"
           value={royaltyFee}
-          onChange={(e) => setRoyaltyFee(Number(e.target.value))}
+          onChange={handleRoyaltyFeeChange}
           className="input input-bordered"
           placeholder="Enter Royalty Fee (e.g. 250 for 2.5%)"
         />

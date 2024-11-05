@@ -59,7 +59,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         eventName: "NftBought",
         // Specify the starting block number from which to read events, this is a bigint.
         fromBlock: 0n,
-        // filters: { tokenId: BigInt(5) }
+        filters: { tokenId: BigInt(tokenId) },
         blockData: true, // 获取区块数据以获取时间戳
     });
 
