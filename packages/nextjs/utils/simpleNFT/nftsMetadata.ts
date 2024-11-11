@@ -1,7 +1,7 @@
 const nftsMetadata = [
   {
     description: "果宝特攻",
-    image: "https://aqua-famous-koala-370.mypinata.cloud/ipfs/  ",
+    image: "https://aqua-famous-koala-370.mypinata.cloud/ipfs/QmTeXhVp71hZ1EsjRRLSwSdsEVwbudUUSrUvo36zQiCg5B",
     name: "菠萝吹雪",
     attributes: [
       {

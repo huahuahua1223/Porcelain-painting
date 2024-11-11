@@ -90,9 +90,10 @@ contract YourCollectible is
         payable(owner()).transfer(listingFee);
 
         // 转移NFT到合约，并授权合约可以转移NFT
-        _transfer(msg.sender, address(this), tokenId);
-        // approve(address(this), tokenId);
+        // _transfer(msg.sender, address(this), tokenId);
+        approve(address(this), tokenId);
         // setApprovalForAll(address(this), true);
+        this.transferFrom(msg.sender, address(this), tokenId);
 
         // 更新NFT信息
         nftItems[tokenId].isListed = true;
@@ -139,8 +140,9 @@ contract YourCollectible is
 		(bool success, ) = seller.call{value: sellerAmount}("");
         require(success, "Transfer to seller failed");
 
-        // 将NFT转移给买家,调用transferFrom函数不为"from"账户
-        _transfer(address(this), msg.sender, tokenId);
+        // 将NFT转移给买家,调用 transferFrom 函数不为"from"账户
+        // _transfer(address(this), msg.sender, tokenId);
+        this.transferFrom(address(this), msg.sender, tokenId);
 
         emit NftBought(tokenId, seller, msg.sender, price, royaltyReceiver, royaltyAmount);
     }
