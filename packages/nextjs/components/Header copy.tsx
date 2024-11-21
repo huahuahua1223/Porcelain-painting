@@ -5,12 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ArrowDownTrayIcon,
   ArrowPathIcon,
-  ArrowUpTrayIcon,
-  Bars3Icon,
   BugAntIcon,
   PhotoIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
@@ -23,11 +21,6 @@ type HeaderMenuLink = {
 };
 
 export const menuLinks: HeaderMenuLink[] = [
-  // {
-  //   label: "My NFTs",
-  //   href: "/myNFTs",
-  //   icon: <PhotoIcon className="h-4 w-4" />,
-  // },
   {
     label: "铸造NFT",
     href: "/create",
@@ -47,16 +40,6 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/transfers",
     icon: <ArrowPathIcon className="h-4 w-4" />,
   },
-  // {
-  //   label: "IPFS 上传",
-  //   href: "/ipfsUpload",
-  //   icon: <ArrowUpTrayIcon className="h-4 w-4" />,
-  // },
-  // {
-  //   label: "IPFS 下载",
-  //   href: "/ipfsDownload",
-  //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
-  // },
   {
     label: "调试合约",
     href: "/debug",
@@ -70,35 +53,13 @@ export const menuLinks: HeaderMenuLink[] = [
 
 export const HeaderMenuLinks = () => {
   const pathname = usePathname();
-  const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = (label: string) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setActiveSubMenu(label);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setActiveSubMenu(null);
-    }, 300); // 延迟300ms隐藏
-  };
 
   return (
     <>
       {menuLinks.map(({ label, href, icon, subMenu }) => {
         const isActive = pathname === href;
-        const isSubMenuActive = activeSubMenu === label;
-
         return (
-          <li
-            key={label}
-            className="relative group"
-            onMouseEnter={() => handleMouseEnter(label)}
-            onMouseLeave={handleMouseLeave}
-          >
+          <li key={label} className="relative group">
             <Link
               href={href || "#"}
               passHref
@@ -109,13 +70,8 @@ export const HeaderMenuLinks = () => {
               {icon}
               <span>{label}</span>
             </Link>
-
             {subMenu && (
-              <ul
-                className={`absolute left-0 top-full mt-1 bg-base-100 shadow-lg rounded-box p-2 w-40 ${
-                  isSubMenuActive ? "block" : "hidden"
-                }`}
-              >
+              <ul className="hidden group-hover:block absolute left-0 top-full mt-1 bg-base-100 shadow-lg rounded-box p-2 w-40">
                 {subMenu.map(({ label, href }) => (
                   <li key={label}>
                     <Link
