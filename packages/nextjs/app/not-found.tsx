@@ -18,7 +18,7 @@ export default function NotFound() {
         style={{
           fontSize: "6rem",
           fontWeight: "bold",
-          color: "#ff4757",
+          // color: "#ff4757",
           marginBottom: "1rem",
         }}
       >

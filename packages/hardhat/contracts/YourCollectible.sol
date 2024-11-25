@@ -29,9 +29,17 @@ contract YourCollectible is
         bool isListed;
         string tokenUri;
     }
+
+    struct Fraction {
+        address owner;
+        uint256 amount; // 持有的碎片数量
+    }
 	
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
 	mapping(uint256 => address) public mintedBy; // 保存每个NFT的铸造者
+    mapping(uint256 => bool) public isFractionalized; // 记录是否被碎片化
+    mapping(uint256 => uint256) public totalFractions; // 每个NFT的碎片总量
+    mapping(uint256 => mapping(address => uint256)) public fractions; // 每个NFT的碎片持有信息
 
     // 事件
     event NftListed(
@@ -40,6 +48,15 @@ contract YourCollectible is
         uint256 price
     );
     event NftBought(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price, address royaltyReceiver, uint256 royaltyAmount);
+    event NftDelisted(uint256 indexed tokenId, address indexed owner);
+    event NFTFractionalized(uint256 indexed tokenId, uint256 totalFractions);
+    event FractionTransferred(
+        uint256 indexed tokenId,
+        address indexed from,
+        address indexed to,
+        uint256 amount
+    );
+    event NFTRedeemed(uint256 indexed tokenId, address indexed redeemer);
 
 	constructor() ERC721("YourCollectible", "YCB") {}
 
@@ -85,6 +102,7 @@ contract YourCollectible is
         require(msg.value == listingFee, "Must pay listing fee");
         require(ownerOf(tokenId) == msg.sender, "You are not the owner");
         require(price > 0, "Price must be greater than zero");
+        require(!isFractionalized[tokenId], "Cannot list fractionalized NFT");
 
 		// 将上架费用转给合约拥有者
         payable(owner()).transfer(listingFee);
@@ -102,6 +120,23 @@ contract YourCollectible is
 		nftItems[tokenId].tokenUri = tokenURI(tokenId);
 
         emit NftListed(tokenId, msg.sender, price);
+    }
+
+    // 下架NFT
+    function delistItem(uint256 tokenId) public nonReentrant {
+        require(item.isListed, "NFT is not listed");
+        require(item.owner == msg.sender, "You are not the owner");
+
+        NFTItem storage item = nftItems[tokenId];
+
+        // 更新NFT信息
+        item.isListed = false;
+        item.price = 0;
+
+        // 将NFT转回给持有者
+        this.transferFrom(address(this), msg.sender, tokenId);
+        
+        emit NftDelisted(tokenId, msg.sender);
     }
 
     // 购买NFT
@@ -183,6 +218,52 @@ contract YourCollectible is
     // 合约拥有者提取合约中的上架费用
     function withdrawFees() public payable onlyOwner nonReentrant {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    // 碎片化NFT
+    function fractionalizeNFT(uint256 tokenId, uint256 total) public {
+        require(ownerOf(tokenId) == msg.sender, "Not the owner of this NFT");
+        require(!isFractionalized[tokenId], "NFT already fractionalized");
+        require(total > 0, "Total fractions must be greater than zero");
+        require(!nftItems[tokenId].isListed, "NFT is currently listed, must delist before fractionalizing");
+
+        isFractionalized[tokenId] = true;
+        totalFractions[tokenId] = total;
+        fractions[tokenId][msg.sender] = total; // 初始持有者拥有全部碎片
+
+        emit NFTFractionalized(tokenId, total);
+    }
+
+    // 转赠NFT碎片
+    function transferFraction(uint256 tokenId,address to,uint256 amount) public {
+        require(isFractionalized[tokenId], "NFT is not fractionalized");
+        require(fractions[tokenId][msg.sender] >= amount, "Insufficient fractions");
+
+        fractions[tokenId][msg.sender] -= amount;
+        fractions[tokenId][to] += amount;
+
+        emit FractionTransferred(tokenId, msg.sender, to, amount);
+    }
+
+    // 集齐所有碎片召唤神龙
+    function redeemNFT(uint256 tokenId) public {
+        require(isFractionalized[tokenId], "NFT is not fractionalized");
+        require(fractions[tokenId][msg.sender] == totalFractions[tokenId], "Must own all fractions");
+
+        // 取消碎片化
+        isFractionalized[tokenId] = false;
+        totalFractions[tokenId] = 0;
+        delete fractions[tokenId][msg.sender];
+
+        // 将NFT转移给持有全部碎片的用户
+        address previousOwner = ownerOf(tokenId);
+        _transfer(previousOwner, msg.sender, tokenId);
+
+        // 更新NFTItem信息
+        nftItems[tokenId].owner = payable(msg.sender);
+        nftItems[tokenId].isListed = false; // 碎片化后通常不再上架
+
+        emit NFTRedeemed(tokenId, msg.sender);
     }
 
 	// 以下函数是 Solidity 所需的重写
