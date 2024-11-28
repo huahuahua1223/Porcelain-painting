@@ -4,6 +4,7 @@ import { Address, AddressInput } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { parseEther, formatEther } from "viem";
+import { useRouter } from "next/navigation";
 
 export const NFTCard = ({ nft }: { nft: Collectible }) => {
   const [transferToAddress, setTransferToAddress] = useState("");
@@ -12,6 +13,8 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
   const [loading, setLoading] = useState(false); // 控制上架按钮的加载状态
   const [isSecondHand, setIsSecondHand] = useState(false); // 检查是否二手交易
   const [royaltyAmount, setRoyaltyAmount] = useState<string>("0"); // 版税费用
+
+  const router = useRouter();
 
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
   const { data: yourCollectibleContract } = useScaffoldContract({
@@ -120,11 +123,20 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
     }
   };
 
+  // 跳转到详情页
+  const handleViewNFTDetails = (tokenId: number) => {
+    router.push(`/market/nftDetail/${tokenId}`);
+  };
+
   return (
     <div className="card card-compact bg-base-100 shadow-lg w-[300px] shadow-secondary">
       <figure className="relative">
         {/* eslint-disable-next-line  */}
-        <img src={nft.image} alt="NFT Image" className="h-60 min-w-full" />
+        <img
+        src={nft.image}
+        alt="NFT Image"
+        className="h-60 min-w-full"
+        onClick={() => handleViewNFTDetails(nft.id)}/>
         <figcaption className="glass absolute bottom-4 left-4 p-4 w-25 rounded-xl">
           <span className="text-white "># {nft.id}</span>
         </figcaption>

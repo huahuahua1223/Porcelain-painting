@@ -124,10 +124,10 @@ contract YourCollectible is
 
     // 下架NFT
     function delistItem(uint256 tokenId) public nonReentrant {
+        NFTItem storage item = nftItems[tokenId];
+
         require(item.isListed, "NFT is not listed");
         require(item.owner == msg.sender, "You are not the owner");
-
-        NFTItem storage item = nftItems[tokenId];
 
         // 更新NFT信息
         item.isListed = false;

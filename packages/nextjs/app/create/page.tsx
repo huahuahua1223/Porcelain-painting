@@ -6,8 +6,9 @@ import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { uploadFileToIPFS, addToIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
+import { uploadFileToIPFS, addToIPFS, saveNFTToDB } from "~~/utils/simpleNFT/ipfs-fetch";
 import { MyHoldings } from "./_components";
+import { usePublicClient } from "wagmi";
 
 const CreateNFTPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
@@ -15,9 +16,10 @@ const CreateNFTPage: NextPage = () => {
   const [description, setDescription] = useState("");
   const [imageCID, setImageCID] = useState<string | null>(null); // 存储图片的 CID
   const [attributes, setAttributes] = useState([{ trait_type: "", value: "" }]);
-  const [royaltyFee, setRoyaltyFee] = useState(250); // 新增的状态，用于存储版税费率
+  const [royaltyFee, setRoyaltyFee] = useState(250); // 用于存储版税费率
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
+  const publicClient = usePublicClient();
   // 处理文件上传
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -30,6 +32,7 @@ const CreateNFTPage: NextPage = () => {
       notification.remove(notificationId);
       
       if (uploadedFile && uploadedFile.IpfsHash) {
+        console.log("IpfsHash==========>", uploadedFile.IpfsHash);
         setImageCID(uploadedFile.IpfsHash); // 将 IPFS CID 设置到状态
         notification.success("Image uploaded to IPFS successfully!");
       } else {
@@ -56,6 +59,8 @@ const CreateNFTPage: NextPage = () => {
 
   // 处理铸造 NFT
   const handleMintItem = async () => {
+    console.log("imageCID==========>", imageCID);
+
     if (!imageCID  || !name || !description) {
       notification.error("Please provide all required information.");
       return;
@@ -75,11 +80,37 @@ const CreateNFTPage: NextPage = () => {
       notification.remove(notificationId);
       notification.success("Metadata uploaded to IPFS");
 
+      console.log("uploadedItemIpfsHash==========>", uploadedItem);
       // 调用智能合约铸造 NFT
-      await writeContractAsync({
+      const mintTx = await writeContractAsync({
         functionName: "mintItem",
         args: [connectedAddress, uploadedItem.IpfsHash, royaltyFee],
       });
+
+      // 从交易回执中获取返回值tokenID
+      const receipt = await publicClient?.getTransactionReceipt({ hash: mintTx as `0x${string}`})
+      console.log("receipt==========>", receipt);
+      const nft_id = receipt?.logs[0].topics[3];
+      const numericId = parseInt(nft_id as `0x${string}`, 16)
+      console.log("numericId==========>" + numericId);
+
+      const mint_item = new Date();
+      // 转换到UTC+8
+      mint_item.setHours(mint_item.getHours() + 8);  // 这里将时间调整为东八区（UTC+8）
+      const mint_item_str = mint_item.toISOString().slice(0, 19).replace('T', ' ');
+
+      // 保存到数据库
+      if(nft_id) {
+        const data = {
+          nft_id: numericId,
+          token_uri: uploadedItem.IpfsHash,
+          mint_item: mint_item_str,
+          owner: connectedAddress,
+          state: 0,
+          royaltyFeeNumerator: royaltyFee,
+        };
+        await saveNFTToDB(data);
+      }
 
       notification.success("NFT Minted successfully!");
     } catch (error) {

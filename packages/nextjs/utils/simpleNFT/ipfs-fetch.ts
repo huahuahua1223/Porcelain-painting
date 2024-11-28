@@ -11,6 +11,13 @@ const fetchFromApi = ({ path, method, body }: { path: string; method: string; bo
 
 export const addToIPFS = (yourJSON: object) => fetchFromApi({ path: "/api/ipfs/add", method: "Post", body: yourJSON });
 
+export const saveNFTToDB = (data: object) => {
+  return fetchFromApi({
+    path: `/api/nft/data`, 
+    method: 'POST', 
+    body: { data }
+  });
+};
 export const uploadFileToIPFS = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);

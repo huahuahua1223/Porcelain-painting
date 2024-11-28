@@ -12,6 +12,14 @@ export async function POST(request: Request) {
       return Response.json({ error: "API key or secret is not set in environment variables" }, { status: 400 });
     }
 
+    console.log("APIKEY===========>", pinataAPIKEY)
+    console.log("APISECRET===========>", pinataAPISECRET)
+    console.log("data===========>", data)
+
+    // 创建一个 AbortController 实现超时功能
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 设置超时时间为 5 秒
+
     const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
       method: 'POST',
       headers: {
@@ -20,7 +28,10 @@ export async function POST(request: Request) {
         'pinata_secret_api_key': pinataAPISECRET,
       },
       body: data,
+      signal: controller.signal, // 添加 signal 以支持超时中断
     });
+
+    clearTimeout(timeout); // 请求完成后清除超时计时器
     
     // const res = await ipfsClient.add(JSON.stringify(body));
     
