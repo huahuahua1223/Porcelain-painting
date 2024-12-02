@@ -13,6 +13,7 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
   const [loading, setLoading] = useState(false); // 控制上架按钮的加载状态
   const [isSecondHand, setIsSecondHand] = useState(false); // 检查是否二手交易
   const [royaltyAmount, setRoyaltyAmount] = useState<string>("0"); // 版税费用
+  const [fractionCount, setFractionCount] = useState<string>(""); // 碎片化数量
 
   const router = useRouter();
 
@@ -123,6 +124,30 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
     }
   };
 
+  // 碎片化
+  const handleFractionalizeNFT = async () => {
+    if (!fractionCount || isNaN(Number(fractionCount)) || Number(fractionCount) <= 0) {
+      notification.error("请输入有效的碎片数量");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await writeContractAsync({
+        functionName: "fractionalizeNFT",
+        args: [BigInt(nft.id), BigInt(fractionCount)],
+      });
+
+      notification.success("NFT 碎片化成功!");
+    } catch (error) {
+      console.error(error);
+      notification.error("碎片化失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 跳转到详情页
   const handleViewNFTDetails = (tokenId: number) => {
     router.push(`/market/nftDetail/${tokenId}`);
@@ -228,6 +253,24 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
               </button>
             </div>
           )}
+
+          {/* 新增碎片化功能 */}
+          <div className="flex items-center my-2 space-x-3">
+            <span className="text-lg font-semibold">碎片数量</span>
+            <input
+              type="text"
+              value={fractionCount}
+              onChange={(e) => setFractionCount(e.target.value)}
+              className="input input-xs rounded-lg shadow-sm w-20 px-1 py-0.5"
+              placeholder="输入数量"
+            />
+            <button
+              className="btn btn-primary btn-sm px-4 py-1"
+              onClick={handleFractionalizeNFT}
+            >
+              碎片化
+            </button>
+          </div>
 
         </div>
       </div>

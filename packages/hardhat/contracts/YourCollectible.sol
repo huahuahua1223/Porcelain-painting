@@ -234,6 +234,36 @@ contract YourCollectible is
         emit NFTFractionalized(tokenId, total);
     }
 
+    // 获取账户的碎片数量
+    function getFractionsByAddress(address account) public view returns (uint256[] memory, uint256[] memory) {
+        uint256 totalTokens = tokenIdCounter.current();
+        uint256 count = 0;
+
+        // 先统计 account 持有的碎片的数量
+        for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
+            if (fractions[tokenId][account] > 0) {
+                count++;
+            }
+        }
+
+        // 创建数组以存储结果
+        uint256[] memory tokenIds = new uint256[](count);
+        uint256[] memory amounts = new uint256[](count);
+
+        // 填充结果
+        uint256 index = 0;
+        for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
+            if (fractions[tokenId][account] > 0) {
+                tokenIds[index] = tokenId;
+                amounts[index] = fractions[tokenId][account];
+                index++;
+            }
+        }
+
+        return (tokenIds, amounts);
+    }
+
+
     // 转赠NFT碎片
     function transferFraction(uint256 tokenId,address to,uint256 amount) public {
         require(isFractionalized[tokenId], "NFT is not fractionalized");

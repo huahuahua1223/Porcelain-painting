@@ -32,15 +32,19 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "铸造NFT",
     href: "/create",
     icon: <PhotoIcon className="h-4 w-4" />,
+    subMenu: [
+      { label: "IPFS下载", href: "/ipfsDownload" },
+      { label: "IPFS上传", href: "/ipfsUpload" },
+    ],
   },
   {
     label: "NFT市场",
     href: "/market",
     icon: <PhotoIcon className="h-4 w-4" />,
-    subMenu: [
-      { label: "热门NFT", href: "/market/popular" },
-      { label: "最新上架", href: "/market/new" },
-    ],
+    // subMenu: [
+    //   { label: "热门NFT", href: "/market/popular" },
+    //   { label: "最新上架", href: "/market/new" },
+    // ],
   },
   {
     label: "买卖记录",
@@ -57,6 +61,11 @@ export const menuLinks: HeaderMenuLink[] = [
   //   href: "/ipfsDownload",
   //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
   // },
+  {
+    label: "碎片化",
+    href: "/fractionalize",
+    icon: <ArrowDownTrayIcon className="h-4 w-4" />,
+  },
   {
     label: "调试合约",
     href: "/debug",
