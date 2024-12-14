@@ -9,68 +9,45 @@ module.exports = {
     themes: [
       {
         light: {
-          primary: "#C8F5FF",
-          "primary-content": "#026262",
-          secondary: "#89d7e9",
-          "secondary-content": "#088484",
-          accent: "#026262",
-          "accent-content": "#E9FBFF",
-          neutral: "#088484",
-          "neutral-content": "#F0FCFF",
-          "base-100": "#F0FCFF",
-          "base-200": "#E1FAFF",
-          "base-300": "#C8F5FF",
-          "base-content": "#088484",
-          info: "#026262",
-          success: "#34EEB6",
-          warning: "#FFCF72",
-          error: "#FF8863",
-
-          "--rounded-btn": "9999rem",
-
-          ".tooltip": {
-            "--tooltip-tail": "6px",
-          },
-          ".link": {
-            textUnderlineOffset: "2px",
-          },
-          ".link:hover": {
-            opacity: "80%",
-          },
-        },
+          primary: "#E0E5EC",            // 浅灰蓝
+          "primary-content": "#6C7A89",   // 深蓝灰
+          secondary: "#AEB8C4",          // 灰蓝
+          "secondary-content": "#3C4A59", // 深蓝
+          accent: "#FFB347",             // 橙黄色
+          "accent-content": "#6C4C1F",   // 深棕
+          neutral: "#F8F9FA",            // 浅白
+          "neutral-content": "#A3B1C6",  // 蓝灰
+          "base-100": "#FFFFFF",         // 白色
+          "base-200": "#F4F4F4",         // 浅灰
+          "base-300": "#E0E5EC",         // 浅灰蓝
+          "base-content": "#6C7A89",     // 深蓝灰
+          info: "#3498DB",               // 蓝色
+          success: "#2ECC71",            // 绿色
+          warning: "#F1C40F",            // 黄色
+          error: "#E74C3C",              // 红色
+        }
+        
       },
       {
         dark: {
-          primary: "#026262",
-          "primary-content": "#C8F5FF",
-          secondary: "#107575",
-          "secondary-content": "#E9FBFF",
-          accent: "#C8F5FF",
-          "accent-content": "#088484",
-          neutral: "#E9FBFF",
-          "neutral-content": "#11ACAC",
-          "base-100": "#11ACAC",
-          "base-200": "#088484",
-          "base-300": "#026262",
-          "base-content": "#E9FBFF",
-          info: "#C8F5FF",
-          success: "#34EEB6",
-          warning: "#FFCF72",
-          error: "#FF8863",
-
-          "--rounded-btn": "9999rem",
-
-          ".tooltip": {
-            "--tooltip-tail": "6px",
-            "--tooltip-color": "oklch(var(--p))",
-          },
-          ".link": {
-            textUnderlineOffset: "2px",
-          },
-          ".link:hover": {
-            opacity: "80%",
-          },
-        },
+          primary: "#2C2C2C",            // 深灰黑
+          "primary-content": "#A3B1C6",   // 蓝灰
+          secondary: "#3C3C3C",          // 黑灰
+          "secondary-content": "#D1D5DB", // 浅蓝灰
+          accent: "#FFA726",             // 橙色
+          "accent-content": "#D87C00",   // 深橙
+          neutral: "#121212",            // 黑色
+          "neutral-content": "#F0F0F0",  // 浅白
+          "base-100": "#1A1A1A",         // 深黑
+          "base-200": "#242424",         // 深灰
+          "base-300": "#2C2C2C",         // 深灰黑
+          "base-content": "#E0E0E0",     // 浅白
+          info: "#3498DB",               // 蓝色
+          success: "#27AE60",            // 绿色
+          warning: "#F39C12",            // 黄色
+          error: "#E74C3C",              // 红色
+        }
+        
       },
     ],
   },

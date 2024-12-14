@@ -41,10 +41,10 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "NFT市场",
     href: "/market",
     icon: <PhotoIcon className="h-4 w-4" />,
-    // subMenu: [
-    //   { label: "热门NFT", href: "/market/popular" },
-    //   { label: "最新上架", href: "/market/new" },
-    // ],
+    subMenu: [
+      { label: "3d 模型", href: "/models" },
+      // { label: "最新上架", href: "/market/new" },
+    ],
   },
   {
     label: "买卖记录",
