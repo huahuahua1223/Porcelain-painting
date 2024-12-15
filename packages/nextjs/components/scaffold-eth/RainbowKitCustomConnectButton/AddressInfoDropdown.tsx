@@ -12,10 +12,12 @@ import {
   ChevronDownIcon,
   DocumentDuplicateIcon,
   QrCodeIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
 import { BlockieAvatar, isENS } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { getTargetNetworks } from "~~/utils/scaffold-eth";
+import Link from "next/link";
 
 const allowedNetworks = getTargetNetworks();
 
@@ -62,6 +64,12 @@ export const AddressInfoDropdown = ({
           tabIndex={0}
           className="dropdown-content menu z-[2] p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1"
         >
+          <li>
+            <Link href="/profile" className="menu-item btn-sm !rounded-xl flex gap-3 py-3">
+              <UserIcon className="h-6 w-4 ml-2 sm:ml-0" />
+              <span>个人中心</span>
+            </Link>
+          </li>
           <NetworkOptions hidden={!selectingNetwork} />
           <li className={selectingNetwork ? "hidden" : ""}>
             {addressCopied ? (
@@ -70,7 +78,7 @@ export const AddressInfoDropdown = ({
                   className="text-xl font-normal h-6 w-4 cursor-pointer ml-2 sm:ml-0"
                   aria-hidden="true"
                 />
-                <span className=" whitespace-nowrap">Copy address</span>
+                <span className=" whitespace-nowrap">复制地址</span>
               </div>
             ) : (
               <CopyToClipboard
@@ -87,7 +95,7 @@ export const AddressInfoDropdown = ({
                     className="text-xl font-normal h-6 w-4 cursor-pointer ml-2 sm:ml-0"
                     aria-hidden="true"
                   />
-                  <span className=" whitespace-nowrap">Copy address</span>
+                  <span className=" whitespace-nowrap">复制地址</span>
                 </div>
               </CopyToClipboard>
             )}
@@ -95,7 +103,7 @@ export const AddressInfoDropdown = ({
           <li className={selectingNetwork ? "hidden" : ""}>
             <label htmlFor="qrcode-modal" className="btn-sm !rounded-xl flex gap-3 py-3">
               <QrCodeIcon className="h-6 w-4 ml-2 sm:ml-0" />
-              <span className="whitespace-nowrap">View QR Code</span>
+              <span className="whitespace-nowrap">查看二维码</span>
             </label>
           </li>
           <li className={selectingNetwork ? "hidden" : ""}>
@@ -107,7 +115,7 @@ export const AddressInfoDropdown = ({
                 rel="noopener noreferrer"
                 className="whitespace-nowrap"
               >
-                View on Block Explorer
+                在区块浏览器上查看
               </a>
             </button>
           </li>
@@ -120,7 +128,7 @@ export const AddressInfoDropdown = ({
                   setSelectingNetwork(true);
                 }}
               >
-                <ArrowsRightLeftIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>Switch Network</span>
+                <ArrowsRightLeftIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>切换网络</span>
               </button>
             </li>
           ) : null}
@@ -130,7 +138,7 @@ export const AddressInfoDropdown = ({
               type="button"
               onClick={() => disconnect()}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>Disconnect</span>
+              <ArrowLeftOnRectangleIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>断开连接</span>
             </button>
           </li>
         </ul>
