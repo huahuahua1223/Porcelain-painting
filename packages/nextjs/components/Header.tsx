@@ -70,10 +70,10 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "调试合约",
     href: "/debug",
     icon: <BugAntIcon className="h-4 w-4" />,
-    subMenu: [
-      { label: "基础调试", href: "/debug/basic" },
-      { label: "高级调试", href: "/debug/advanced" },
-    ],
+    // subMenu: [
+    //   { label: "基础调试", href: "/debug/basic" },
+    //   { label: "高级调试", href: "/debug/advanced" },
+    // ],
   },
 ];
 

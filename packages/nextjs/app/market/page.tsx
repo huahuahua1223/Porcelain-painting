@@ -11,12 +11,17 @@ import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
 import { formatEther } from "viem"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 
 const ListNFTsPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [listedNFTs, setListedNFTs] = useState<any[]>([]);
   const [nftDetails, setNftDetails] = useState<Record<number, NFTMetaData | null>>({});
   const router = useRouter();
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: Infinity });
+  const [filteredNFTs, setFilteredNFTs] = useState<any[]>([]);
+  const [maxPrice, setMaxPrice] = useState<number>(10); // 初始最大价格
 
   // 获取所有上架的 NFT
   const { data: onSaleNfts } = useScaffoldReadContract({
@@ -32,8 +37,21 @@ const ListNFTsPage: NextPage = () => {
       onSaleNfts.forEach((nft: any) => {
         fetchNFTDetails(nft.tokenUri, nft.tokenId); // 获取每个NFT的详细信息
       });
+
+      // 计算最大价格
+      const prices = onSaleNfts.map((nft: any) => Number(formatEther(nft.price)));
+      const maxPrice = Math.max(...prices);
+      setMaxPrice(maxPrice);
     }
   }, [onSaleNfts]);
+
+  useEffect(() => {
+    const filtered = listedNFTs.filter((nft) => {
+      const priceETH = Number(formatEther(nft.price));
+      return priceETH >= priceRange.min && priceETH <= priceRange.max;
+    });
+    setFilteredNFTs(filtered);
+  }, [listedNFTs, priceRange]);
 
   // 获取NFT详细信息的函数
   const fetchNFTDetails = async (tokenUri: string, tokenId: number) => {
@@ -82,10 +100,26 @@ const ListNFTsPage: NextPage = () => {
     <div className="flex flex-col items-center pt-10">
       <h1 className="text-4xl font-bold mb-8">Available NFTs</h1>
 
+      {/* 价格筛选滑动条 */}
+      <div className="mb-4 w-full max-w-md">
+        <label className="block mb-2">Price Range (ETH):</label>
+        <Slider
+          range
+          min={0}
+          max={maxPrice} // 使用动态最大价格
+          defaultValue={[0, maxPrice]}
+          onChange={(value) => setPriceRange({ min: value[0], max: value[1] })}
+        />
+        <div className="flex justify-between mt-2">
+          <span>{priceRange.min} ETH</span>
+          <span>{priceRange.max} ETH</span>
+        </div>
+      </div>
+
       {/* NFT 列表展示 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {listedNFTs.length > 0 ? (
-          listedNFTs.map((nft, index) => {
+        {filteredNFTs.length > 0 ? (
+          filteredNFTs.map((nft, index) => {
             const metadata = nftDetails[nft.tokenId];
             const priceETH = formatEther(nft.price);
 
