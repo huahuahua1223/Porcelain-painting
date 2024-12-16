@@ -11,8 +11,8 @@ import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
 import { formatEther } from "viem"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
 const ListNFTsPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
@@ -22,6 +22,8 @@ const ListNFTsPage: NextPage = () => {
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: Infinity });
   const [filteredNFTs, setFilteredNFTs] = useState<any[]>([]);
   const [maxPrice, setMaxPrice] = useState<number>(10); // 初始最大价格
+  const [traits, setTraits] = useState<Record<string, Set<string>>>({});
+  const [selectedTraits, setSelectedTraits] = useState<Record<string, string>>({});
 
   // 获取所有上架的 NFT
   const { data: onSaleNfts } = useScaffoldReadContract({
@@ -31,11 +33,12 @@ const ListNFTsPage: NextPage = () => {
   });
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
+  // 初始化 NFT 列表和最大价格
   useEffect(() => {
     if (onSaleNfts) {
       setListedNFTs(onSaleNfts);
       onSaleNfts.forEach((nft: any) => {
-        fetchNFTDetails(nft.tokenUri, nft.tokenId); // 获取每个NFT的详细信息
+        fetchNFTDetails(nft.tokenUri, nft.tokenId); // 获取每个 NFT 的详细信息
       });
 
       // 计算最大价格
@@ -45,22 +48,43 @@ const ListNFTsPage: NextPage = () => {
     }
   }, [onSaleNfts]);
 
+  // 根据价格和属性筛选 NFT
   useEffect(() => {
     const filtered = listedNFTs.filter((nft) => {
       const priceETH = Number(formatEther(nft.price));
-      return priceETH >= priceRange.min && priceETH <= priceRange.max;
+
+      // 筛选符合价格范围和选择属性的 NFT
+      const matchesTraits = Object.entries(selectedTraits).every(([traitType, value]) => {
+        const metadata = nftDetails[nft.tokenId];
+        if (!metadata?.attributes) return false;
+        return metadata.attributes.some(attr => attr.trait_type === traitType && attr.value === value);
+      });
+
+      return priceETH >= priceRange.min && priceETH <= priceRange.max && matchesTraits;
     });
     setFilteredNFTs(filtered);
-  }, [listedNFTs, priceRange]);
+  }, [listedNFTs, priceRange, selectedTraits, nftDetails]);
 
-  // 获取NFT详细信息的函数
+  // 获取 NFT 详细信息的函数
   const fetchNFTDetails = async (tokenUri: string, tokenId: number) => {
     try {
-      const metadata = await getMetadataFromIPFS(tokenUri); // 通过IPFS获取NFT元数据
+      const metadata = await getMetadataFromIPFS(tokenUri); // 通过 IPFS 获取 NFT 元数据
       setNftDetails((prevDetails) => ({
         ...prevDetails,
         [tokenId]: metadata,
       }));
+
+      // 动态提取属性
+      metadata?.attributes?.forEach(attr => {
+        setTraits(prev => {
+          const newTraits = { ...prev };
+          if (!newTraits[attr.trait_type]) {
+            newTraits[attr.trait_type] = new Set();
+          }
+          newTraits[attr.trait_type].add(attr.value);
+          return newTraits;
+        });
+      });
     } catch (error) {
       console.error(`Failed to fetch metadata for token ${tokenId}`, error);
       setNftDetails((prevDetails) => ({
@@ -70,7 +94,15 @@ const ListNFTsPage: NextPage = () => {
     }
   };
 
-  // 购买NFT函数
+  // 更新选择的属性
+  const handleTraitChange = (traitType: string, value: string) => {
+    setSelectedTraits(prev => ({
+      ...prev,
+      [traitType]: value,
+    }));
+  };
+
+  // 购买 NFT 函数
   const handleBuyNFT = async (tokenId: number, price: number) => {
     const notificationId = notification.loading("Purchasing NFT...");
     const formattedPrice = BigInt(price);
@@ -116,6 +148,33 @@ const ListNFTsPage: NextPage = () => {
         </div>
       </div>
 
+      {/* 动态属性筛选 */}
+      <div className="mb-4 w-full max-w-md flex flex-wrap gap-4">
+        {Object.keys(traits).map(traitType => (
+          <div key={traitType} className="flex-1 min-w-[150px]">
+            <label className="block mb-2 font-semibold text-lg">{traitType}:</label>
+            <div className="relative">
+              <select
+                className="select select-bordered w-full pl-10 pr-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onChange={(e) => handleTraitChange(traitType, e.target.value)}
+              >
+                <option value="">All</option>
+                {Array.from(traits[traitType]).map(value => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 3a1 1 0 011 1v1h2a1 1 0 110 2h-2v1a1 1 0 11-2 0V7H7a1 1 0 110-2h2V4a1 1 0 011-1z" />
+                </svg>
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* NFT 列表展示 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredNFTs.length > 0 ? (
@@ -127,48 +186,30 @@ const ListNFTsPage: NextPage = () => {
               <div key={index} className="card w-96 bg-base-100 shadow-xl">
                 <figure>
                   <img
-                    src={metadata?.image || "/placeholder.png"} // 使用元数据中的image字段
+                    src={metadata?.image || "/placeholder.png"}
                     alt={metadata?.name || "NFT Image"}
                     className="w-full h-60 object-cover"
-                    onClick={() => handleViewNFTDetails(nft.tokenId)} // 点击跳转到详情页面
+                    onClick={() => handleViewNFTDetails(nft.tokenId)}
                   />
                 </figure>
                 <div className="card-body">
                   <h2 className="card-title">{metadata?.name || "Unnamed NFT"}</h2>
-                  {/* <p>描述：{metadata?.description || "No description available."}</p> */}
                   <p className="text-gray-500">{Number(priceETH)} ETH</p>
-                  
-                  {/* 显示NFT属性 */}
-                  {/* {metadata?.attributes && (
-                    <div className="mb-2">
-                      <h3 className="font-semibold">Attributes:</h3>
-                      <ul>
-                        {metadata.attributes.map((attribute, idx) => (
-                          <li key={idx}>
-                            {attribute.trait_type}: {attribute.value}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )} */}
-
                   <div className="card-actions justify-end">
                     {!isConnected || isConnecting ? (
                       <RainbowKitCustomConnectButton />
                     ) : (
-                        <>
-                          <Link href={`/market/nftDetail/${nft.tokenId}`} passHref>
-                            <button className="btn btn-secondary">
-                              View Details
-                            </button>
-                          </Link>
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
-                          >
-                            Buy NFT
-                          </button>
-                        </>
+                      <>
+                        <Link href={`/market/nftDetail/${nft.tokenId}`} passHref>
+                          <button className="btn btn-secondary">View Details</button>
+                        </Link>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
+                        >
+                          Buy NFT
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
