@@ -81,6 +81,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         fromBlock: 0n,
         filters: { tokenId: BigInt(tokenId) },
         blockData: true, // 获取区块数据以获取时间戳
+        watch: true, // 轮询
     });
 
     if (isLoading)
