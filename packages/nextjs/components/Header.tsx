@@ -33,8 +33,8 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/create",
     icon: <PhotoIcon className="h-4 w-4" />,
     subMenu: [
-      { label: "IPFS下载", href: "/ipfsDownload" },
-      { label: "IPFS上传", href: "/ipfsUpload" },
+      { label: "URI 下载", href: "/ipfsDownload" },
+      { label: "URI 上传", href: "/ipfsUpload" },
     ],
   },
   {
@@ -186,11 +186,11 @@ export const Header = () => {
         {/* Desktop menu */}
         <Link href="/" passHref className="hidden xl:flex items-center gap-1 ml-4 mr-6 shrink-0">
           <div className="flex relative w-10 h-10">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/wx.jpg" />
+            <Image alt="SE2 logo" className="cursor-pointer" fill src="/hello.gif" />
           </div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight">huahua</span>
-            <span className="text-xs">Simple NFT</span>
+            <span className="text-xs">NFTMarket</span>
           </div>
         </Link>
         <ul className="hidden xl:flex xl:flex-nowrap menu menu-horizontal px-1 gap-2">

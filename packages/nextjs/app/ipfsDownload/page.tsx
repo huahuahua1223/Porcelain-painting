@@ -18,17 +18,16 @@ const IpfsDownload: NextPage = () => {
 
   const handleIpfsDownload = async () => {
     setLoading(true);
-    const notificationId = notification.loading("Getting data from IPFS");
+    const notificationId = notification.loading("Getting data from IPFS...");
     try {
       const metaData = await getMetadataFromIPFS(ipfsPath);
       notification.remove(notificationId);
-      notification.success("Downloaded from IPFS");
-
+      notification.success("Successfully downloaded from IPFS");
       setYourJSON(metaData);
     } catch (error) {
       notification.remove(notificationId);
-      notification.error("Error downloading from IPFS");
-      console.log(error);
+      notification.error(`Error downloading from IPFS: ${error.message}`);
+      console.error(error);
     } finally {
       setLoading(false);
     }

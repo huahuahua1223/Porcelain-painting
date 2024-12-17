@@ -23,13 +23,12 @@ const IpfsUpload: NextPage = () => {
     try {
       const uploadedItem = await addToIPFS(yourJSON);
       notification.remove(notificationId);
-      notification.success("Uploaded to IPFS");
-
+      notification.success("Successfully uploaded to IPFS");
       setUploadedIpfsPath(uploadedItem.IpfsHash);
     } catch (error) {
       notification.remove(notificationId);
-      notification.error("Error uploading to IPFS");
-      console.log(error);
+      notification.error(`Error uploading to IPFS: ${error.message}`);
+      console.error(error);
     } finally {
       setLoading(false);
     }

@@ -24,6 +24,8 @@ const ListNFTsPage: NextPage = () => {
   const [maxPrice, setMaxPrice] = useState<number>(10); // 初始最大价格
   const [traits, setTraits] = useState<Record<string, Set<string>>>({});
   const [selectedTraits, setSelectedTraits] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 3;
 
   // 获取所有上架的 NFT
   const { data: onSaleNfts } = useScaffoldReadContract({
@@ -128,6 +130,16 @@ const ListNFTsPage: NextPage = () => {
     router.push(`/market/nftDetail/${tokenId}`);
   };
 
+  // 计算当前页的NFT
+  const indexOfLastNFT = currentPage * itemsPerPage;
+  const indexOfFirstNFT = indexOfLastNFT - itemsPerPage;
+  const currentNFTs = filteredNFTs.slice(indexOfFirstNFT, indexOfLastNFT);
+
+  // 处理页码更改
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
   return (
     <div className="flex flex-col items-center pt-10">
       <h1 className="text-4xl font-bold mb-8">Available NFTs</h1>
@@ -177,8 +189,8 @@ const ListNFTsPage: NextPage = () => {
 
       {/* NFT 列表展示 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredNFTs.length > 0 ? (
-          filteredNFTs.map((nft, index) => {
+        {currentNFTs.length > 0 ? (
+          currentNFTs.map((nft, index) => {
             const metadata = nftDetails[nft.tokenId];
             const priceETH = formatEther(nft.price);
 
@@ -219,6 +231,19 @@ const ListNFTsPage: NextPage = () => {
         ) : (
           <p>No NFTs listed for sale.</p>
         )}
+      </div>
+
+      {/* 分页控件 */}
+      <div className="flex justify-center mt-4">
+        {Array.from({ length: Math.ceil(filteredNFTs.length / itemsPerPage) }, (_, i) => (
+          <button
+            key={i}
+            className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'} mx-1`}
+            onClick={() => handlePageChange(i + 1)}
+          >
+            {i + 1}
+          </button>
+        ))}
       </div>
     </div>
   );
