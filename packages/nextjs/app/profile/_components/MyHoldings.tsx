@@ -7,18 +7,21 @@ import { useScaffoldContract, useScaffoldReadContract } from "~~/hooks/scaffold-
 import { notification } from "~~/utils/scaffold-eth";
 import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
+import { FractionOperations } from "./FractionOperations";
 
 export interface Collectible extends Partial<NFTMetaData> {
   id: number;
   uri: string;
   owner: string;
   price?: string;  // 新增的属性，用于存储用户输入的价格
+  isFractionalized?: boolean; // 新增属性，标识是否碎片化
 }
 
 export const MyHoldings = () => {
   const { address: connectedAddress } = useAccount();
   const [myAllCollectibles, setMyAllCollectibles] = useState<Collectible[]>([]);
   const [allCollectiblesLoading, setAllCollectiblesLoading] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
   const { data: yourCollectibleContract } = useScaffoldContract({
     contractName: "YourCollectible",
@@ -30,6 +33,10 @@ export const MyHoldings = () => {
     args: [connectedAddress],
     watch: true,
   });
+
+  const handleFractionalized = () => {
+    setRefresh(prev => !prev);
+  };
 
   useEffect(() => {
     const updateMyCollectibles = async (): Promise<void> => {
@@ -46,17 +53,16 @@ export const MyHoldings = () => {
             BigInt(tokenIndex),
           ]);
 
+          const isFractionalized = await yourCollectibleContract.read.isNFTFractionalized([tokenId]);
+
           const tokenURI = await yourCollectibleContract.read.tokenURI([tokenId]);
-
-          // const ipfsHash = tokenURI.replace("https://aqua-famous-koala-370.mypinata.cloud/ipfs/", "");
-
-          // const nftMetadata: NFTMetaData = await getMetadataFromIPFS(ipfsHash);
           const nftMetadata: NFTMetaData = await getMetadataFromIPFS(tokenURI as string);
 
           collectibleUpdate.push({
             id: parseInt(tokenId.toString()),
             uri: tokenURI,
             owner: connectedAddress,
+            isFractionalized: isFractionalized,
             ...nftMetadata,
           });
         } catch (e) {
@@ -72,7 +78,7 @@ export const MyHoldings = () => {
 
     updateMyCollectibles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectedAddress, myTotalBalance]);
+  }, [connectedAddress, myTotalBalance, refresh]);
 
   if (allCollectiblesLoading)
     return (
@@ -83,17 +89,31 @@ export const MyHoldings = () => {
 
   return (
     <>
-      {myAllCollectibles.length === 0 ? (
+      {/* {myAllCollectibles.length === 0 ? (
         <div className="flex justify-center items-center mt-10">
           <div className="text-2xl text-primary-content">No NFTs found</div>
         </div>
-      ) : (
-        <div className="flex flex-wrap gap-4 my-8 px-5 justify-center">
-          {myAllCollectibles.map(item => (
-            <NFTCard nft={item} key={item.id} />
+      ) : ( */}
+        <>
+          <div className="flex flex-wrap gap-4 my-8 px-5 justify-center">
+            {myAllCollectibles.map(item => (
+              <div key={item.id}>
+              {!item.isFractionalized && (
+                <NFTCard nft={item} onFractionalized={handleFractionalized} />
+              )}
+              {/* {item.isFractionalized && (
+                <div className="mt-2">
+                  <h3 className="text-lg font-semibold">Token ID: {item.id} 的碎片</h3>
+                  <FractionOperations tokenId={item.id} onOperationComplete={handleFractionalized} />
+                </div>
+              )} */}
+            </div>
           ))}
+          {/* <FractionOperations onOperationComplete={handleFractionalized} /> */}
         </div>
-      )}
+        <FractionOperations onOperationComplete={handleFractionalized} />
+      </>
+      {/* )} */}
     </>
   );
 };

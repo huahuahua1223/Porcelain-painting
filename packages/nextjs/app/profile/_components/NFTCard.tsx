@@ -6,7 +6,7 @@ import { notification } from "~~/utils/scaffold-eth";
 import { parseEther, formatEther } from "viem";
 import { useRouter } from "next/navigation";
 
-export const NFTCard = ({ nft }: { nft: Collectible }) => {
+export const NFTCard = ({ nft, onFractionalized }: { nft: Collectible, onFractionalized: () => void }) => {
   const [transferToAddress, setTransferToAddress] = useState("");
   const [isListed, setIsListed] = useState(false);
   const [price, setPrice] = useState<string>(""); // 用于存储用户输入的价格
@@ -140,6 +140,7 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
       });
 
       notification.success("NFT 碎片化成功!");
+      onFractionalized(); // 调用回调函数通知父组件
     } catch (error) {
       console.error(error);
       notification.error("碎片化失败");

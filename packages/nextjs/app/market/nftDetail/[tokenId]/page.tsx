@@ -25,6 +25,13 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         args: [BigInt(tokenId)],
     });
 
+    // 检查NFT是否被碎片化
+    const { data: isFractionalized } = useScaffoldReadContract({
+        contractName: "YourCollectible",
+        functionName: "isNFTFractionalized",
+        args: [BigInt(tokenId)],
+    });
+
     useEffect(() => {
         if (nftData?.tokenUri) {
             getMetadataFromIPFS(nftData.tokenUri).then((data) => {
@@ -153,7 +160,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                                     <strong>价格:</strong> {formatEther(nftData?.price ?? 0n)} ETH
                                 </div>
                                 <div>
-                                    <strong>拥有者:</strong> <Address address={nftData?.owner} />
+                                    <strong>拥有者:</strong> {isFractionalized ? "该NFT已被碎片化，无法查看拥有者" : <Address address={nftData?.owner} />}
                                 </div>
                                 <div>
                                     <strong>是否上架:</strong> {nftData?.isListed ? "是" : "否"}

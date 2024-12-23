@@ -142,7 +142,7 @@ const ListNFTsPage: NextPage = () => {
 
   return (
     <div className="flex flex-col items-center pt-10">
-      <h1 className="text-4xl font-bold mb-8">Available NFTs</h1>
+      <h1 className="text-4xl font-bold mb-8">正在出售的 NFT</h1>
 
       {/* 价格筛选滑动条 */}
       <div className="mb-4 w-full max-w-md">

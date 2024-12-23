@@ -31,15 +31,17 @@ contract YourCollectible is
     }
 
     struct Fraction {
-        address owner;
         uint256 amount; // 持有的碎片数量
+        bool isForSale;
+        uint256 price; // 每个碎片的价格
     }
 	
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
 	mapping(uint256 => address) public mintedBy; // 保存每个NFT的铸造者
     mapping(uint256 => bool) public isFractionalized; // 记录是否被碎片化
     mapping(uint256 => uint256) public totalFractions; // 每个NFT的碎片总量
-    mapping(uint256 => mapping(address => uint256)) public fractions; // 每个NFT的碎片持有信息
+    mapping(uint256 => mapping(address => Fraction)) public fractions; // 每个NFT的碎片持有信息
+    mapping(uint256 => address[]) public fractionOwners; // 记录每个 tokenId 的碎片所有者地址
 
     // 事件
     event NftListed(
@@ -50,6 +52,9 @@ contract YourCollectible is
     event NftBought(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price, address royaltyReceiver, uint256 royaltyAmount);
     event NftDelisted(uint256 indexed tokenId, address indexed owner);
     event NFTFractionalized(uint256 indexed tokenId, uint256 totalFractions);
+    event FractionForSale(uint256 indexed tokenId, address indexed owner, uint256 price);
+    event FractionSaleCancelled(uint256 indexed tokenId, address indexed owner);
+    event FractionBought(uint256 indexed tokenId, address indexed buyer, address indexed seller, uint256 amount, uint256 pricePerFraction);
     event FractionTransferred(
         uint256 indexed tokenId,
         address indexed from,
@@ -198,7 +203,7 @@ contract YourCollectible is
         // 创建一个新数组来存储上架的NFT
         NFTItem[] memory items = new NFTItem[](listedItemCount);
 
-        // 填充上架的NFT
+        // 填充架的NFT
         for (uint256 i = 1; i <= totalItems; i++) {
             if (nftItems[i].isListed) {
                 items[currentIndex] = nftItems[i];
@@ -219,6 +224,11 @@ contract YourCollectible is
     function withdrawFees() public payable onlyOwner nonReentrant {
         payable(owner()).transfer(address(this).balance);
     }
+    
+    // 检查NFT是否已经碎片化
+    function isNFTFractionalized(uint256 tokenId) public view returns (bool) {
+        return isFractionalized[tokenId];
+    }
 
     // 碎片化NFT
     function fractionalizeNFT(uint256 tokenId, uint256 total) public {
@@ -229,48 +239,120 @@ contract YourCollectible is
 
         isFractionalized[tokenId] = true;
         totalFractions[tokenId] = total;
-        fractions[tokenId][msg.sender] = total; // 初始持有者拥有全部碎片
+        fractions[tokenId][msg.sender] = Fraction({
+            amount: total,
+            isForSale: false,
+            price: 0
+        }); // 初始持有者拥有全部碎片
+        fractionOwners[tokenId].push(msg.sender);
 
         emit NFTFractionalized(tokenId, total);
     }
 
     // 获取账户的碎片数量
-    function getFractionsByAddress(address account) public view returns (uint256[] memory, uint256[] memory) {
+    function getFractionsByAddress(address account) public view returns (uint256[] memory, Fraction[] memory) {
         uint256 totalTokens = tokenIdCounter.current();
         uint256 count = 0;
 
         // 先统计 account 持有的碎片的数量
         for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
-            if (fractions[tokenId][account] > 0) {
+            if (fractions[tokenId][account].amount > 0) {
                 count++;
             }
         }
 
         // 创建数组以存储结果
         uint256[] memory tokenIds = new uint256[](count);
-        uint256[] memory amounts = new uint256[](count);
+        Fraction[] memory fractionss = new Fraction[](count);
 
         // 填充结果
         uint256 index = 0;
         for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
-            if (fractions[tokenId][account] > 0) {
+            if (fractions[tokenId][account].amount > 0) {
                 tokenIds[index] = tokenId;
-                amounts[index] = fractions[tokenId][account];
+                fractionss[index] = fractions[tokenId][account];
                 index++;
             }
         }
 
-        return (tokenIds, amounts);
+        return (tokenIds, fractionss);
     }
 
+    // 设置碎片出售
+    function setFractionForSale(uint256 tokenId, uint256 price) public {
+        require(isFractionalized[tokenId], "NFT is not fractionalized");
+        Fraction storage userFraction = fractions[tokenId][msg.sender];
+        require(userFraction.amount > 0, "You do not own any fractions");
+        require(price > 0, "Price must be greater than zero");
+    
+        userFraction.isForSale = true;
+        userFraction.price = price;
+    
+        emit FractionForSale(tokenId, msg.sender, price);
+    }
+
+    // 取消碎片出售
+    function cancelFractionSale(uint256 tokenId) public {
+        require(isFractionalized[tokenId], "NFT is not fractionalized");
+        Fraction storage userFraction = fractions[tokenId][msg.sender];
+        require(userFraction.isForSale, "Fraction is not for sale");
+        require(userFraction.amount > 0, "You do not own any fractions");
+    
+        userFraction.isForSale = false;
+        userFraction.price = 0;
+    
+        emit FractionSaleCancelled(tokenId, msg.sender);
+    }
+
+    // 购买碎片
+    function buyFraction(uint256 tokenId, address seller, uint256 amount) public payable nonReentrant {
+        require(isFractionalized[tokenId], "NFT is not fractionalized");
+        Fraction storage sellerFraction = fractions[tokenId][seller];
+        require(sellerFraction.isForSale, "Fraction is not for sale");
+        require(sellerFraction.amount >= amount, "Insufficient fractions for sale");
+        require(msg.value == sellerFraction.price * amount, "Incorrect payment amount");
+    
+        // 更新碎片持有量
+        sellerFraction.amount -= amount;
+        if (sellerFraction.amount == 0) {
+            sellerFraction.isForSale = false;
+            sellerFraction.price = 0;
+        }
+    
+        fractions[tokenId][msg.sender].amount += amount;
+    
+        // 如果买家是首次购买该 tokenId 的碎片，添加到 fractionOwners
+        if (fractions[tokenId][msg.sender].amount == amount) {
+            fractionOwners[tokenId].push(msg.sender);
+        }
+    
+        // 转移资金给卖家
+        (bool success, ) = payable(seller).call{value: msg.value}("");
+        require(success, "Transfer to seller failed");
+    
+        emit FractionBought(tokenId, msg.sender, seller, amount, sellerFraction.price);
+    }
 
     // 转赠NFT碎片
-    function transferFraction(uint256 tokenId,address to,uint256 amount) public {
+    function transferFraction(uint256 tokenId, address to, uint256 amount) public {
         require(isFractionalized[tokenId], "NFT is not fractionalized");
-        require(fractions[tokenId][msg.sender] >= amount, "Insufficient fractions");
+        Fraction storage senderFraction = fractions[tokenId][msg.sender];
+        require(senderFraction.amount >= amount, "Insufficient fractions");
+        require(!senderFraction.isForSale, "Cannot transfer fractions that are for sale");
 
-        fractions[tokenId][msg.sender] -= amount;
-        fractions[tokenId][to] += amount;
+        senderFraction.amount -= amount;
+        // 如果出售状态被部分或全部转移
+        if (senderFraction.amount == 0) {
+            senderFraction.isForSale = false;
+            senderFraction.price = 0;
+        }
+
+        fractions[tokenId][to].amount += amount;
+
+        // 如果接收者是首次接收该 tokenId 的碎片，添加到 fractionOwners
+        if (fractions[tokenId][to].amount == amount) {
+            fractionOwners[tokenId].push(to);
+        }
 
         emit FractionTransferred(tokenId, msg.sender, to, amount);
     }
@@ -278,22 +360,70 @@ contract YourCollectible is
     // 集齐所有碎片召唤神龙
     function redeemNFT(uint256 tokenId) public {
         require(isFractionalized[tokenId], "NFT is not fractionalized");
-        require(fractions[tokenId][msg.sender] == totalFractions[tokenId], "Must own all fractions");
-
+        require(fractions[tokenId][msg.sender].amount == totalFractions[tokenId], "Must own all fractions");
+    
         // 取消碎片化
         isFractionalized[tokenId] = false;
         totalFractions[tokenId] = 0;
-        delete fractions[tokenId][msg.sender];
-
+        delete fractions[tokenId][msg.sender].isForSale;
+        delete fractions[tokenId][msg.sender].price;
+        fractions[tokenId][msg.sender].amount = 0;
+    
+        // 清空 fractionOwners 映射
+        delete fractionOwners[tokenId];
+    
         // 将NFT转移给持有全部碎片的用户
         address previousOwner = ownerOf(tokenId);
         _transfer(previousOwner, msg.sender, tokenId);
-
+    
         // 更新NFTItem信息
         nftItems[tokenId].owner = payable(msg.sender);
         nftItems[tokenId].isListed = false; // 碎片化后通常不再上架
-
+    
         emit NFTRedeemed(tokenId, msg.sender);
+    }
+
+    // 获取所有上架的碎片
+    function getAllFractionsForSale() public view returns (uint256[] memory, address[] memory, Fraction[] memory) {
+        uint256 totalTokens = tokenIdCounter.current();
+        uint256 count = 0;
+
+        // 统计所有上架的碎片数量
+        for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
+            if (isFractionalized[tokenId]) {
+                address[] memory ownerss = fractionOwners[tokenId];
+                for (uint256 j = 0; j < ownerss.length; j++) {
+                    address owner = ownerss[j];
+                    if (fractions[tokenId][owner].isForSale) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        // 创建数组以存储结果
+        uint256[] memory tokenIds = new uint256[](count);
+        address[] memory owners = new address[](count);
+        Fraction[] memory fractionsForSale = new Fraction[](count);
+
+        // 填充结果
+        uint256 index = 0;
+        for (uint256 tokenId = 1; tokenId <= totalTokens; tokenId++) {
+            if (isFractionalized[tokenId]) {
+                address[] memory ownersList = fractionOwners[tokenId];
+                for (uint256 j = 0; j < ownersList.length; j++) {
+                    address owner = ownersList[j];
+                    if (fractions[tokenId][owner].isForSale) {
+                        tokenIds[index] = tokenId;
+                        owners[index] = owner;
+                        fractionsForSale[index] = fractions[tokenId][owner];
+                        index++;
+                    }
+                }
+            }
+        }
+
+        return (tokenIds, owners, fractionsForSale);
     }
 
 	// 以下函数是 Solidity 所需的重写

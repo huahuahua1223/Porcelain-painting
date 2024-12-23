@@ -7,16 +7,18 @@ import { useAccount } from "wagmi";
 import { Address, AddressInput, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
-
+import { parseEther, formatEther } from "viem";
 
 const Fractionalize: NextPage = () => {
   const [loading, setLoading] = useState(false);
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [fractionDetails, setFractionDetails] = useState<{ tokenId: number; amount: number }[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
-  const [transferAddress, setTransferAddress] = useState("");
-  const [transferAmount, setTransferAmount] = useState("");
+  const [clientAddress, setClientAddress] = useState<string | null>(null);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [buyAmount, setBuyAmount] = useState("");
+  const [selectedTokenIdForBuy, setSelectedTokenIdForBuy] = useState<number | null>(null);
+  const [selectedOwnerForBuy, setSelectedOwnerForBuy] = useState<string | null>(null);
+  const [selectedPriceForBuy, setSelectedPriceForBuy] = useState<bigint | null>(null);
 
   const { writeContractAsync: writeContractAsync } = useScaffoldWriteContract("YourCollectible");
   const { data: yourCollectibleContract } = useScaffoldContract({
@@ -26,68 +28,78 @@ const Fractionalize: NextPage = () => {
   // Define the read contract hook to call getFractionsByAddress
   const { data: fractionsData, refetch: fetchFractions } = useScaffoldReadContract({
     contractName: "YourCollectible",
-    functionName: "getFractionsByAddress",
-    args: [connectedAddress], // Pass the current address as argument
+    functionName: "getAllFractionsForSale",
   });
 
   useEffect(() => {
     if (connectedAddress && fractionsData) {
-        if (connectedAddress && fractionsData) {
-            const tokenIds = fractionsData[0]; // First array returned
-            const amounts = fractionsData[1]; // Second array returned
-      
-            // Transform into an array of objects for easier rendering
-            const parsedData = tokenIds.map((tokenId: any, index: number) => ({
-              tokenId: Number(tokenId),
-              amount: Number(amounts[index]),
-            }));
-      
-            setFractionDetails(parsedData);
-          }
+      const tokenIds = fractionsData[0]; // 第一个返回的数组
+      const owners = fractionsData[1]; // 第二个返回的数组
+      const fractions = fractionsData[2]; // 第三个返回的数组
+
+      // 将数据转换为对象数组以便于渲染
+      const parsedData = tokenIds.map((tokenId: any, index: number) => ({
+        tokenId: Number(tokenId),
+        owner: owners[index],
+        amount: Number(fractions[index].amount),
+        isForSale: fractions[index].isForSale,
+        price: fractions[index].price,
+      }));
+
+      setFractionDetails(parsedData);
     }
   }, [connectedAddress, fractionsData]);
 
-  // 转移碎片
-  const handleTransfer = async () => {
-    if (!selectedTokenId || !transferAddress || !transferAmount) {
-      alert("Please fill out all fields.");
+  useEffect(() => {
+    // 在客户端渲染时设置地址
+    if (isConnected) {
+      setClientAddress(connectedAddress);
+    }
+  }, [connectedAddress, isConnected]);
+
+  // 购买碎片
+  const handleBuyFraction = async () => {
+    if (!selectedTokenIdForBuy || !selectedOwnerForBuy || !buyAmount || !selectedPriceForBuy) {
+      notification.error("Please fill out all fields.");
       return;
     }
 
     try {
       setLoading(true);
+
+      // 计算总价格
+      const totalPriceWei = selectedPriceForBuy * BigInt(parseInt(buyAmount, 10));
+      console.log("Total Price (Wei):", totalPriceWei);
+
       await writeContractAsync({
-        functionName: "transferFraction",
-        args: [selectedTokenId, transferAddress, parseInt(transferAmount, 10)],
+        functionName: "buyFraction",
+        args: [selectedTokenIdForBuy, selectedOwnerForBuy, parseInt(buyAmount, 10)],
+        value: totalPriceWei,
       });
-      alert("Transfer successful!");
-      setShowModal(false);
+      notification.success("Fraction purchase successful!");
+      fetchFractions(); // 更新页面数据
+      setShowBuyModal(false); // 关闭模态框
     } catch (error) {
       console.error(error);
-      alert("Transfer failed!");
+      notification.error("Fraction purchase failed!");
     } finally {
       setLoading(false);
     }
   };
 
-  // 赎回NFT
-  const handleRedeem = async (tokenId: number) => {
-    if (!tokenId) {
-      alert("Invalid Token ID");
-      return;
-    }
-  
+  // 下架碎片
+  const handleCancelSale = async (tokenId: number) => {
     try {
       setLoading(true);
       await writeContractAsync({
-        functionName: "redeemNFT",
+        functionName: "cancelFractionSale",
         args: [tokenId],
       });
-      alert("Redeem successful!");
+      notification.success("Fraction sale cancelled!");
       fetchFractions(); // 更新页面数据
     } catch (error) {
       console.error(error);
-      alert("Redeem failed!");
+      notification.error("Failed to cancel sale.");
     } finally {
       setLoading(false);
     }
@@ -97,111 +109,107 @@ const Fractionalize: NextPage = () => {
     <>
       <div className="flex items-center flex-col flex-grow pt-10">
         <h1 className="text-center mb-4">
-          <span className="block text-4xl font-bold">Fractionalize to NFT</span>
+          <span className="block text-4xl font-bold">正在出售的 NFT 碎片</span>
         </h1>
 
         <div className="mb-4">
-            <p>
-              <strong>Connected Address:</strong> {connectedAddress || "Not Connected"}
-            </p>
-            <p>
-              <strong>Total NFTs Fractionalized:</strong> {fractionDetails.length}
-            </p>
-      </div>
+          <p>
+            <strong>Connected Address:</strong> 
+            {clientAddress ? <Address address={clientAddress} format="long" /> : "Loading..."}
+          </p>
+          <p>
+            <strong>当前正在出售的 NFT 碎片</strong> {fractionDetails.length}
+          </p>
+        </div>
 
+        {/* 将表格容器设置为 flex 并居中对齐 */}
+        <div className="w-full max-w-md flex justify-center">
+          {fractionDetails.length > 0 ? (
+            <table className="table-auto border-collapse border border-gray-200 w-full text-left">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2">Token ID</th>
+                  <th className="border px-4 py-2">Owner</th>
+                  <th className="border px-4 py-2">数量</th>
+                  <th className="border px-4 py-2">单价（ETH）</th>
+                  <th className="border px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fractionDetails.map(({ tokenId, owner, amount, isForSale, price }) => (
+                  <tr key={tokenId}>
+                    <td className="border px-4 py-2">
+                      <Link href={`/market/nftDetail/${tokenId}`} className="text-blue-500 hover:underline">
+                        {tokenId}
+                      </Link>
+                    </td>
+                    <td className="border px-4 py-2">{<Address address={owner} format="long" />}</td>
+                    <td className="border px-4 py-2">{amount}</td>
+                    <td className="border px-4 py-2">{formatEther(price)}</td>
+                    <td className="border px-4 py-2">
+                      <button
+                        className="mr-2 bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600"
+                        onClick={() => {
+                          setSelectedTokenIdForBuy(tokenId);
+                          setSelectedOwnerForBuy(owner);
+                          setSelectedPriceForBuy(BigInt(price));
+                          setShowBuyModal(true);
+                        }}
+                      >
+                        购买
+                      </button>
+                      {connectedAddress === owner && (
+                        <button
+                          className="mr-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          onClick={() => handleCancelSale(tokenId)}
+                        >
+                          下架
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No fractions owned yet.</p>
+          )}
+        </div>
+      </div>      
 
-      {/* Display token details */}
-      <div className="w-full max-w-md">
-        {fractionDetails.length > 0 ? (
-          <table className="table-auto border-collapse border border-gray-200 w-full text-left">
-            <thead>
-              <tr>
-                <th className="border px-4 py-2">Token ID</th>
-                <th className="border px-4 py-2">数量</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fractionDetails.map(({ tokenId, amount }) => (
-                <tr key={tokenId}>
-                <td className="border px-4 py-2">
-                  <Link href={`/market/nftDetail/${tokenId}`} className="text-blue-500 hover:underline">
-                    {tokenId}
-                  </Link>
-                </td>
-                <td className="border px-4 py-2">{amount}</td>
-                <td className="border px-4 py-2">
-                  <button
-                    className="mr-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                    onClick={() => {
-                      setSelectedTokenId(tokenId);
-                      setShowModal(true);
-                    }}
-                  >
-                    Transfer
-                  </button>
-                    <button
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                      onClick={() => handleRedeem(tokenId)}
-                    >
-                      Redeem
-                    </button>
-                </td>
-              </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No fractions owned yet.</p>
-        )}
-      </div>
-        
-      </div>
-
-      {/* Modal for transferring NFT fractions */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-4">Transfer NFT Fraction</h2>
+      {/* Modal for buying NFT fractions */}
+      {showBuyModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75">
+          <div className=" p-8 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-6">购买 NFT 碎片</h2>
             <p>
-              <strong>Token ID:</strong> {selectedTokenId}
+              <strong>Token ID:</strong> {selectedTokenIdForBuy}
             </p>
-            <AddressInput
-                value={transferAddress}
-                placeholder="Receiver address"
-                onChange={(newValue) => setTransferAddress(newValue)}
-            />    
-            {/* <input
+            <input
               type="number"
-              placeholder="Amount"
-              className="w-full border px-2 py-1 rounded mb-2"
-              value={transferAmount}
-              onChange={(e) => setTransferAmount(e.target.value)}
-            /> */}
-            <InputBase
-              value={transferAmount}
-              onChange={(newValue) => setTransferAmount(newValue)}
-              placeholder="Amount"
+              className="w-full p-2 border border-gray-300 rounded mt-4"
+              value={buyAmount}
+              onChange={(e) => setBuyAmount(e.target.value)}
+              placeholder="Enter amount to buy"
             />
-            <div className="flex justify-end">
+            <div className="mt-6 flex justify-end space-x-4">
               <button
-                className="bg-gray-300 text-gray-700 px-3 py-1 rounded mr-2"
-                onClick={() => setShowModal(false)}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                onClick={() => setShowBuyModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                onClick={handleTransfer}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={handleBuyFraction}
                 disabled={loading}
               >
-                {loading ? "Transferring..." : "Confirm"}
+                {loading ? "Purchasing..." : "Confirm Purchase"}
               </button>
             </div>
           </div>
         </div>
       )}
-
     </>
   );
 };
