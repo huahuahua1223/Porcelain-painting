@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2; //Do not change the solidity version as it negatively impacts submission grading
 
+import "hardhat/console.sol";
+import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; // 实现 ERC721
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol"; // 实现 ERC721Enumerable
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; // 存储 tokenURI
@@ -17,41 +20,56 @@ contract YourCollectible is
     ERC721Royalty,
 	Ownable,
     ReentrancyGuard,
-    IERC4907
+    IERC4907,
+    AutomationCompatibleInterface
 {
 	using Counters for Counters.Counter;
 
 	Counters.Counter public tokenIdCounter;
 	uint256 public listingFee = 0.025 ether; // 上架费用，0.025 eth = 25000000000000000 wei
+    // uint256 public constant LOYALTY_PERIOD = 30 days;    // 忠诚度奖励周期（30天）seconds minutes hours days weeks
+    uint256 public constant LOYALTY_PERIOD = 1 minutes;
+    uint256 public constant LOYALTY_REWARD = 0.001 ether; // 每次奖励金额
 	
+    // NFT结构体
 	struct NFTItem {
-        uint256 tokenId;
-        uint256 price;
-        address payable owner;
-        bool isListed;
-        string tokenUri;
+        uint256 tokenId; // tokenId
+        uint256 price; // 价格
+        address payable owner; // 持有者
+        bool isListed; // 是否上架
+        string tokenUri; // 完整的 tokenURI
     }
 
+    // 碎片结构体
     struct Fraction {
         uint256 amount; // 持有的碎片数量
-        bool isForSale;
-        uint256 price; // 每个碎片的价格
+        bool isForSale; // 是否出售
+        uint256 price; // 每个碎片的单价
+    }
+
+    // 租赁用户结构体
+    struct UserInfo {
+        address user;   // 用户地址
+        uint64 expires; // 过期时间戳
+    }
+
+    // 忠诚度结构体
+    struct LoyaltyInfo {
+        uint256 holdingStartTime;  // NFT 持有开始时间
+        bool rewardClaimed;        // 是否已领取奖励
+        uint256 lastRewardTime;    // 上次领取奖励的时间
     }
 	
+    // 映射
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
 	mapping(uint256 => address) public mintedBy; // 保存每个NFT的铸造者
     mapping(uint256 => bool) public isFractionalized; // 记录是否被碎片化
     mapping(uint256 => uint256) public totalFractions; // 每个NFT的碎片总量
     mapping(uint256 => mapping(address => Fraction)) public fractions; // 每个NFT的碎片持有信息
     mapping(uint256 => address[]) public fractionOwners; // 记录每个 tokenId 的碎片所有者地址
-
-    struct UserInfo {
-        address user;   // 用户地址
-        uint64 expires; // 过期时间戳
-    }
-
-    mapping(uint256 => UserInfo) internal _users;
-
+    mapping(uint256 => UserInfo) internal _users; // 记录每个NFT的租赁用户信息
+    mapping(uint256 => LoyaltyInfo) public nftLoyalty;  // tokenId => 忠诚度信息
+   
     // 事件
     event NftListed(
         uint256 indexed tokenId,
@@ -71,8 +89,33 @@ contract YourCollectible is
         uint256 amount
     );
     event NFTRedeemed(uint256 indexed tokenId, address indexed redeemer);
+    event LoyaltyRewardClaimed(uint256 indexed tokenId, address indexed holder, uint256 amount);
 
-	constructor() ERC721("YourCollectible", "YCB") {}
+	uint256 public lastTimeStamp;    // 上次更新时间
+	uint256 public immutable interval; // 更新间隔
+
+	constructor() payable ERC721("YourCollectible", "YCB") {
+		lastTimeStamp = block.timestamp;
+		interval = 60; // 60秒更新一次
+	}
+
+	// Chainlink Automation 所需的检查函数
+	function checkUpkeep(bytes calldata  checkData ) 
+		external 
+		view 
+		override 
+		returns (bool upkeepNeeded, bytes memory performData ) 
+	{
+		upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+	}
+
+	// Chainlink Automation 所需的执行函数
+	function performUpkeep(bytes calldata performData ) external override {
+		if ((block.timestamp - lastTimeStamp) > interval) {
+			lastTimeStamp = block.timestamp;
+			// 这里可以添加需要定期执行的逻辑
+		}
+	}
 
 	function _baseURI() internal pure override returns (string memory) {
 		return "https://aqua-famous-koala-370.mypinata.cloud/ipfs/";
@@ -102,7 +145,15 @@ contract YourCollectible is
             isListed: false,
             tokenUri: completeTokenURI
         });
-		
+
+        // 初始化忠诚度信息
+        // holdingStartTime: lastTimeStamp,
+        nftLoyalty[tokenId] = LoyaltyInfo({
+            holdingStartTime: block.timestamp,
+            rewardClaimed: false,
+            lastRewardTime: 0
+        });
+        
 		return tokenId;
 	}
 
@@ -458,6 +509,73 @@ contract YourCollectible is
         return _users[tokenId].expires;
     }
 
+    // 检查是否可以领取忠诚度奖励
+    function checkClaimLoyaltyReward(uint256 tokenId) public view returns (bool) {
+        require(_exists(tokenId), "NFT does not exist");
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        
+        LoyaltyInfo memory loyalty = nftLoyalty[tokenId];
+        
+        // 使用 lastTimeStamp 替代 block.timestamp
+        // 计算持有时间
+        uint256 holdingTime = block.timestamp - loyalty.holdingStartTime;
+        // uint256 holdingTime = lastTimeStamp - loyalty.holdingStartTime;
+        
+        // 计算自上次领取奖励后经过的时间
+        uint256 timeSinceLastReward = block.timestamp - loyalty.lastRewardTime;
+        // uint256 timeSinceLastReward = lastTimeStamp - loyalty.lastRewardTime;
+        
+        // 添加日志事件来帮助调试
+        console.log("Current timestamp:", block.timestamp);
+        console.log("Current timestamp:", lastTimeStamp);
+        console.log("Holding start time:", loyalty.holdingStartTime);
+        console.log("Holding time:", holdingTime);
+        console.log("Last reward time:", loyalty.lastRewardTime);
+        console.log("Time since last reward:", timeSinceLastReward);
+        console.log("Loyalty period:", LOYALTY_PERIOD);
+        
+        // 需要持有超过忠诚度周期，且距离上次领取超过忠诚度周期
+        return holdingTime >= LOYALTY_PERIOD && timeSinceLastReward >= LOYALTY_PERIOD;
+    }
+
+    // 领取忠诚度奖励
+    function claimLoyaltyReward(uint256 tokenId) public nonReentrant {
+        require(checkClaimLoyaltyReward(tokenId), "Cannot claim reward yet");
+        require(address(this).balance >= LOYALTY_REWARD, "Insufficient contract balance");
+        
+        LoyaltyInfo storage loyalty = nftLoyalty[tokenId];
+        loyalty.lastRewardTime = block.timestamp;
+        
+        // 转账奖励
+        (bool success, ) = payable(msg.sender).call{value: LOYALTY_REWARD}("");
+        require(success, "Reward transfer failed");
+        
+        emit LoyaltyRewardClaimed(tokenId, msg.sender, LOYALTY_REWARD);
+    }
+
+    // 获取NFT的忠诚度信息
+    function getLoyaltyInfo(uint256 tokenId) public view returns (
+        uint256 holdingStartTime,
+        bool rewardClaimed,
+        uint256 lastRewardTime,
+        uint256 nextRewardTime
+    ) {
+        require(_exists(tokenId), "NFT does not exist");
+        
+        LoyaltyInfo memory loyalty = nftLoyalty[tokenId];
+        
+        holdingStartTime = loyalty.holdingStartTime;
+        rewardClaimed = loyalty.rewardClaimed;
+        lastRewardTime = loyalty.lastRewardTime;
+        
+        // 计算下次可领取奖励的时间
+        if (lastRewardTime == 0) {
+            nextRewardTime = holdingStartTime + LOYALTY_PERIOD;
+        } else {
+            nextRewardTime = lastRewardTime + LOYALTY_PERIOD;
+        }
+    }
+
 	// 以下函数是 Solidity 所需的重写
 	function _beforeTokenTransfer(
 		address from,
@@ -467,7 +585,26 @@ contract YourCollectible is
 	) internal override(ERC721, ERC721Enumerable) {
 		super._beforeTokenTransfer(from, to, tokenId, quantity); // 调用父类的函数
 
-        // 如果转移的 NFT 有用户，则删除用户信息
+        // 如果是新的转账（不是铸造），则重置忠诚度信息
+        // holdingStartTime: lastTimeStamp,
+        if (from != address(0) && to != address(0)) {
+            nftLoyalty[tokenId] = LoyaltyInfo({
+                holdingStartTime: block.timestamp,
+                rewardClaimed: false,
+                lastRewardTime: 0
+            });
+        }
+        // 如果是铸造，则初始化忠诚度信息
+        // holdingStartTime: lastTimeStamp,
+        else if (from == address(0)) {
+            nftLoyalty[tokenId] = LoyaltyInfo({
+                holdingStartTime: block.timestamp,
+                rewardClaimed: false,
+                lastRewardTime: 0
+            });
+        }
+
+        // 如果转移的 NFT 有租赁用户，则删除租赁用户信息
         if (from != to && _users[tokenId].user != address(0)) {
             delete _users[tokenId];
         }
@@ -496,5 +633,27 @@ contract YourCollectible is
 		return super.supportsInterface(interfaceId); // 检查接口支持
 	}
 
-    
+    // 添加一个调试函数来检查具体的时间信息
+    function debugLoyaltyTiming(uint256 tokenId) public view returns (
+        uint256 currentTimestamp,
+        uint256 holdingStartTime,
+        uint256 holdingDuration,
+        uint256 lastRewardTime,
+        uint256 timeSinceLastReward,
+        uint256 loyaltyPeriod
+    ) {
+        require(_exists(tokenId), "NFT does not exist");
+        
+        LoyaltyInfo memory loyalty = nftLoyalty[tokenId];
+        
+        currentTimestamp = block.timestamp;
+        holdingStartTime = loyalty.holdingStartTime;
+        holdingDuration = block.timestamp - loyalty.holdingStartTime;
+        lastRewardTime = loyalty.lastRewardTime;
+        timeSinceLastReward = block.timestamp - loyalty.lastRewardTime;
+        loyaltyPeriod = LOYALTY_PERIOD;
+        
+        return (currentTimestamp, holdingStartTime, holdingDuration, lastRewardTime, timeSinceLastReward, loyaltyPeriod);
+    }
+
 }

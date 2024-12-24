@@ -7,11 +7,11 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     YourCollectible: {
-      address: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
         {
           inputs: [],
-          stateMutability: "nonpayable",
+          stateMutability: "payable",
           type: "constructor",
         },
         {
@@ -193,6 +193,31 @@ const deployedContracts = {
             },
           ],
           name: "FractionTransferred",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "holder",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "LoyaltyRewardClaimed",
           type: "event",
         },
         {
@@ -403,6 +428,32 @@ const deployedContracts = {
           type: "event",
         },
         {
+          inputs: [],
+          name: "LOYALTY_PERIOD",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "LOYALTY_REWARD",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "address",
@@ -486,6 +537,106 @@ const deployedContracts = {
           name: "cancelFractionSale",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "checkClaimLoyaltyReward",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes",
+              name: "checkData",
+              type: "bytes",
+            },
+          ],
+          name: "checkUpkeep",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "upkeepNeeded",
+              type: "bool",
+            },
+            {
+              internalType: "bytes",
+              name: "performData",
+              type: "bytes",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "claimLoyaltyReward",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "debugLoyaltyTiming",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "currentTimestamp",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "holdingStartTime",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "holdingDuration",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "lastRewardTime",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "timeSinceLastReward",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "loyaltyPeriod",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -725,6 +876,40 @@ const deployedContracts = {
               type: "uint256",
             },
           ],
+          name: "getLoyaltyInfo",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "holdingStartTime",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "rewardClaimed",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "lastRewardTime",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "nextRewardTime",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
           name: "getMintedBy",
           outputs: [
             {
@@ -777,6 +962,19 @@ const deployedContracts = {
               internalType: "struct YourCollectible.NFTItem",
               name: "",
               type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "interval",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -839,6 +1037,19 @@ const deployedContracts = {
               internalType: "bool",
               name: "",
               type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "lastTimeStamp",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -976,6 +1187,35 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "nftLoyalty",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "holdingStartTime",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "rewardClaimed",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "lastRewardTime",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [],
           name: "owner",
           outputs: [
@@ -1005,6 +1245,19 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes",
+              name: "performData",
+              type: "bytes",
+            },
+          ],
+          name: "performUpkeep",
+          outputs: [],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -1448,6 +1701,10 @@ const deployedContracts = {
         setUser: "contracts/IERC4907.sol",
         userExpires: "contracts/IERC4907.sol",
         userOf: "contracts/IERC4907.sol",
+        checkUpkeep:
+          "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol",
+        performUpkeep:
+          "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol",
       },
     },
   },
