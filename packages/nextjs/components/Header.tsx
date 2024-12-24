@@ -8,9 +8,12 @@ import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   ArrowUpTrayIcon,
+  ShoppingCartIcon,
   Bars3Icon,
   BugAntIcon,
   PhotoIcon,
+  WrenchScrewdriverIcon,
+  ClipboardIcon,
 } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
@@ -31,7 +34,7 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "铸造NFT",
     href: "/create",
-    icon: <PhotoIcon className="h-4 w-4" />,
+    icon: <WrenchScrewdriverIcon className="h-4 w-4" />,
     subMenu: [
       { label: "URI 下载", href: "/ipfsDownload" },
       { label: "URI 上传", href: "/ipfsUpload" },
@@ -40,8 +43,9 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "NFT市场",
     href: "/market",
-    icon: <PhotoIcon className="h-4 w-4" />,
+    icon: <ShoppingCartIcon className="h-4 w-4" />,
     subMenu: [
+      { label: "碎片化市场", href: "/fractionalize" },
       { label: "3d 模型", href: "/models" },
       // { label: "最新上架", href: "/market/new" },
     ],
@@ -49,7 +53,7 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "买卖记录",
     href: "/transfers",
-    icon: <ArrowPathIcon className="h-4 w-4" />,
+    icon: <ClipboardIcon className="h-4 w-4" />,
   },
   // {
   //   label: "IPFS 上传",

@@ -4,10 +4,11 @@ pragma solidity ^0.8.2; //Do not change the solidity version as it negatively im
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; // 实现 ERC721
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol"; // 实现 ERC721Enumerable
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol"; // 存储 tokenURI
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol"; // 实现 EIP-2981 标准
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol"; // 实现 EIP-2981 版税标准
 import "@openzeppelin/contracts/access/Ownable.sol"; // 用于控制合约的权限
 import "@openzeppelin/contracts/utils/Counters.sol"; // 用于生成递增的 tokenId
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; // 防止重入攻击
+import "./IERC4907.sol"; // 导入 ERC4907 接口
 
 contract YourCollectible is
 	ERC721,
@@ -15,7 +16,8 @@ contract YourCollectible is
 	ERC721URIStorage,
     ERC721Royalty,
 	Ownable,
-    ReentrancyGuard
+    ReentrancyGuard,
+    IERC4907
 {
 	using Counters for Counters.Counter;
 
@@ -42,6 +44,13 @@ contract YourCollectible is
     mapping(uint256 => uint256) public totalFractions; // 每个NFT的碎片总量
     mapping(uint256 => mapping(address => Fraction)) public fractions; // 每个NFT的碎片持有信息
     mapping(uint256 => address[]) public fractionOwners; // 记录每个 tokenId 的碎片所有者地址
+
+    struct UserInfo {
+        address user;   // 用户地址
+        uint64 expires; // 过期时间戳
+    }
+
+    mapping(uint256 => UserInfo) internal _users;
 
     // 事件
     event NftListed(
@@ -426,6 +435,29 @@ contract YourCollectible is
         return (tokenIds, owners, fractionsForSale);
     }
 
+    // 设置 NFT 的租赁用户和过期时间
+    function setUser(uint256 tokenId, address user, uint64 expires) public override {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "ERC4907: caller is not owner nor approved");
+        UserInfo storage info = _users[tokenId];
+        info.user = user;
+        info.expires = expires;
+        emit UpdateUser(tokenId, user, expires);
+    }
+
+    // 获取 NFT 的当前租赁用户
+    function userOf(uint256 tokenId) public view override returns(address) {
+        if(uint256(_users[tokenId].expires) >= block.timestamp){
+            return _users[tokenId].user;
+        } else{
+            return address(0);
+        }
+    }
+
+    // 获取 NFT 的租赁用户过期时间
+    function userExpires(uint256 tokenId) public view override returns(uint256) {
+        return _users[tokenId].expires;
+    }
+
 	// 以下函数是 Solidity 所需的重写
 	function _beforeTokenTransfer(
 		address from,
@@ -434,6 +466,11 @@ contract YourCollectible is
 		uint256 quantity
 	) internal override(ERC721, ERC721Enumerable) {
 		super._beforeTokenTransfer(from, to, tokenId, quantity); // 调用父类的函数
+
+        // 如果转移的 NFT 有用户，则删除用户信息
+        if (from != to && _users[tokenId].user != address(0)) {
+            delete _users[tokenId];
+        }
 	}
 
 	function _burn(
@@ -458,4 +495,6 @@ contract YourCollectible is
 	{
 		return super.supportsInterface(interfaceId); // 检查接口支持
 	}
+
+    
 }
