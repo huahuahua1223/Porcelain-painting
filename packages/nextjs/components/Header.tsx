@@ -194,7 +194,7 @@ export const Header = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight">huahua</span>
-            <span className="text-xs">NFTMarket</span>
+            <span className="text-xs">NFT Market</span>
           </div>
         </Link>
         <ul className="hidden xl:flex xl:flex-nowrap menu menu-horizontal px-1 gap-2">

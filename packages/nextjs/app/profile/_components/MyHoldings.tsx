@@ -27,6 +27,14 @@ export const MyHoldings = () => {
   const [myAllCollectibles, setMyAllCollectibles] = useState<Collectible[]>([]);
   const [allCollectiblesLoading, setAllCollectiblesLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  
+  // 分页相关状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3; // 每页显示3个NFT
+
+  // 过滤掉碎片化的 NFT
+  const nonFractionalizedNFTs = myAllCollectibles.filter(nft => !nft.isFractionalized);
+  const totalPages = Math.ceil(nonFractionalizedNFTs.length / itemsPerPage);
 
   const { data: yourCollectibleContract } = useScaffoldContract({
     contractName: "YourCollectible",
@@ -150,6 +158,25 @@ export const MyHoldings = () => {
     updateMyCollectibles();
   }, [connectedAddress, myTotalBalance, refresh]);
 
+  // 获取当前页的NFT（只包含非碎片化的NFT）
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return nonFractionalizedNFTs.slice(startIndex, endIndex);
+  };
+
+  // 页面导航函数
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // 当数据更新时，确保当前页码有效
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   if (allCollectiblesLoading)
     return (
       <div className="flex justify-center items-center mt-10">
@@ -160,23 +187,57 @@ export const MyHoldings = () => {
   return (
     <>
       <div className="flex flex-wrap gap-4 my-8 px-5 justify-center">
-        {myAllCollectibles.map(item => (
+        {getCurrentPageItems().map(item => (
           <div key={item.id}>
-            {!item.isFractionalized && (
-              <>
-                <NFTCard 
-                  nft={item} 
-                  onNFTUpdate={handleNFTUpdate}
-                />
-                <LoyaltyRewards 
-                  tokenId={item.id}
-                  onRewardClaimed={handleNFTUpdate}
-                />
-              </>
-            )}
+            <NFTCard 
+              nft={item} 
+              onNFTUpdate={handleNFTUpdate}
+            />
+            <LoyaltyRewards 
+              tokenId={item.id}
+              onRewardClaimed={handleNFTUpdate}
+            />
           </div>
         ))}
       </div>
+
+      {/* 分页控件 */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 my-4">
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            上一页
+          </button>
+          
+          {/* 页码按钮 */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+            <button
+              key={pageNum}
+              className={`btn btn-sm ${currentPage === pageNum ? 'btn-active' : 'btn-ghost'}`}
+              onClick={() => goToPage(pageNum)}
+            >
+              {pageNum}
+            </button>
+          ))}
+          
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            下一页
+          </button>
+        </div>
+      )}
+
+      {/* 添加总数显示 */}
+      <div className="text-center text-sm text-gray-500 mt-2">
+        总共 {nonFractionalizedNFTs.length} 个非碎片化 NFT
+      </div>
+
       <FractionOperations onOperationComplete={handleNFTUpdate} />
     </>
   );

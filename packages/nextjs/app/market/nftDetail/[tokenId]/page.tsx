@@ -113,7 +113,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
 
             {/* 详情 */}
             <div className="overflow-x-auto mt-10">
-                <h2 className="text-3xl font-bold mb-4 text-center text-primary-content">NFT Details</h2>
+                <h2 className="text-3xl font-bold mb-4 text-center text-primary-content">NFT 详情</h2>
 
                 <div className="flex flex-col md:flex-row items-center md:items-stretch gap-10">
                     {/* 图片部分 */}

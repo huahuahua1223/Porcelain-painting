@@ -7,7 +7,7 @@ const Home: NextPage = () => {
     <div className="flex items-center flex-col flex-grow pt-10">
       <div className="px-5 w-[90%] md:w-[75%]">
         <h1 className="text-center mb-6">
-          <span className="block text-2xl mb-2">您的NFT市场名称</span>
+          <span className="block text-2xl mb-2">NFT Market</span>
           <span className="block text-4xl font-bold">欢迎来到您的NFT市场</span>
         </h1>
         <div className="flex flex-col items-center justify-center">
