@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useScaffoldContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
 interface LoyaltyInfo {
@@ -15,56 +15,51 @@ interface LoyaltyRewardsProps {
 }
 
 export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps) => {
-  const [loyaltyInfo, setLoyaltyInfo] = useState<LoyaltyInfo | null>(null);
-  const [canClaim, setCanClaim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [waitTime, setWaitTime] = useState<number>(0);
 
-  const { data: yourCollectibleContract } = useScaffoldContract({
-    contractName: "YourCollectible",
-  });
-
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
-  // 更新等待时间的函数
+  // 使用 useScaffoldContractRead 替代直接的合约调用
+  const { data: loyaltyInfoData, refetch: refetchLoyaltyInfo } = useScaffoldReadContract({
+    contractName: "YourCollectible",
+    functionName: "getLoyaltyInfo",
+    args: [BigInt(tokenId)],
+  });
+
+  const { data: canClaimData, refetch: refetchCanClaim } = useScaffoldReadContract({
+    contractName: "YourCollectible",
+    functionName: "checkClaimLoyaltyReward",
+    args: [BigInt(tokenId)],
+  });
+
+  // 解析合约数据
+  const loyaltyInfo: LoyaltyInfo | null = loyaltyInfoData ? {
+    holdingStartTime: Number(loyaltyInfoData[0]),
+    rewardClaimed: loyaltyInfoData[1],
+    lastRewardTime: Number(loyaltyInfoData[2]),
+    nextRewardTime: Number(loyaltyInfoData[3]),
+  } : null;
+
+  // 更新等待时间（纯前端计算）
   const updateWaitTime = () => {
     if (loyaltyInfo && loyaltyInfo.nextRewardTime > Date.now() / 1000) {
       const timeLeft = Math.ceil(loyaltyInfo.nextRewardTime - Date.now() / 1000);
       setWaitTime(timeLeft);
+      
+      // 如果剩余时间小于60秒，刷新合约数据
+      if (timeLeft <= 60) {
+        refetchLoyaltyInfo();
+        refetchCanClaim();
+      }
     } else {
       setWaitTime(0);
+      refetchLoyaltyInfo();
+      refetchCanClaim();
     }
   };
 
-  useEffect(() => {
-    const fetchLoyaltyInfo = async () => {
-      if (!yourCollectibleContract) return;
-
-      try {
-        // 获取忠诚度信息
-        const info = await yourCollectibleContract.read.getLoyaltyInfo([BigInt(tokenId)]);
-        setLoyaltyInfo({
-          holdingStartTime: Number(info[0]),
-          rewardClaimed: info[1],
-          lastRewardTime: Number(info[2]),
-          nextRewardTime: Number(info[3]),
-        });
-
-        // 检查是否可以领取奖励
-        const claimable = await yourCollectibleContract.read.checkClaimLoyaltyReward([BigInt(tokenId)]);
-        setCanClaim(claimable);
-      } catch (error) {
-        console.error("Error fetching loyalty info:", error);
-      }
-    };
-
-    fetchLoyaltyInfo();
-    // 每60秒更新一次状态
-    const infoInterval = setInterval(fetchLoyaltyInfo, 60000);
-    return () => clearInterval(infoInterval);
-  }, [yourCollectibleContract, tokenId]);
-
-  // 添加实时更新等待时间的效果
+  // 倒计时更新
   useEffect(() => {
     updateWaitTime();
     const timer = setInterval(updateWaitTime, 1000); // 每秒更新一次
@@ -80,6 +75,9 @@ export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps
       });
       notification.success("奖励领取成功！");
       onRewardClaimed?.();
+      // 领取成功后刷新数据
+      refetchLoyaltyInfo();
+      refetchCanClaim();
     } catch (error) {
       console.error("Error claiming reward:", error);
       notification.error("领取奖励失败");
@@ -110,7 +108,6 @@ export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps
       parts.push(`${remainingSeconds} 秒`);
     }
 
-    // 只显示最大的两个时间单位
     return parts.slice(0, 2).join(' ');
   };
 
@@ -128,7 +125,7 @@ export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps
         }</p>
         <p>下次可领取时间: {new Date(loyaltyInfo.nextRewardTime * 1000).toLocaleString()}</p>
         
-        {canClaim && (
+        {canClaimData && (
           <button
             className={`btn btn-primary w-full ${isLoading ? "loading" : ""}`}
             onClick={handleClaimReward}
@@ -138,7 +135,7 @@ export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps
           </button>
         )}
         
-        {!canClaim && waitTime > 0 && (
+        {!canClaimData && waitTime > 0 && (
           <div className="text-sm text-gray-500 mt-2">
             距离下次可领取还需等待: {formatWaitTime(waitTime)}
           </div>
