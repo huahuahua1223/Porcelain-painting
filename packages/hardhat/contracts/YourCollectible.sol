@@ -28,7 +28,7 @@ contract YourCollectible is
 	Counters.Counter public tokenIdCounter;
 	uint256 public listingFee = 0.025 ether; // 上架费用，0.025 eth = 25000000000000000 wei
     // uint256 public constant LOYALTY_PERIOD = 30 days;    // 忠诚度奖励周期（30天）seconds minutes hours days weeks
-    uint256 public constant LOYALTY_PERIOD = 1 minutes;
+    uint256 public constant LOYALTY_PERIOD = 5 minutes;
     uint256 public constant LOYALTY_REWARD = 0.001 ether; // 每次奖励金额
 	
     // NFT结构体

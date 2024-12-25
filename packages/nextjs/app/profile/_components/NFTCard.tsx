@@ -64,6 +64,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
   }, [nftItem, mintedBy]);
 
   useEffect(() => {
+    // 获取文件类型
     const fetchFileType = async () => {
       try {
         const response = await fetch(nft.image, { method: "HEAD" });

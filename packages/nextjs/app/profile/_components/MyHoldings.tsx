@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { NFTCard } from "./NFTCard";
 import { useAccount } from "wagmi";
-import { useScaffoldContract, useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
 import { FractionOperations } from "./FractionOperations";
+import { LoyaltyRewards } from "./LoyaltyRewards";
 
 export interface Collectible extends Partial<NFTMetaData> {
   id: number;
@@ -134,7 +135,7 @@ export const MyHoldings = () => {
           }
         }
 
-        console.log("Final collectibleUpdate:", collectibleUpdate);
+        console.log("Final collectibleUpdate============", collectibleUpdate);
         
         collectibleUpdate.sort((a, b) => a.id - b.id);
         setMyAllCollectibles(collectibleUpdate);
@@ -162,10 +163,16 @@ export const MyHoldings = () => {
         {myAllCollectibles.map(item => (
           <div key={item.id}>
             {!item.isFractionalized && (
-              <NFTCard 
-                nft={item} 
-                onNFTUpdate={handleNFTUpdate}
-              />
+              <>
+                <NFTCard 
+                  nft={item} 
+                  onNFTUpdate={handleNFTUpdate}
+                />
+                <LoyaltyRewards 
+                  tokenId={item.id}
+                  onRewardClaimed={handleNFTUpdate}
+                />
+              </>
             )}
           </div>
         ))}
