@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
+import { formatEther } from "viem";
+import { motion, AnimatePresence } from "framer-motion";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
-import { formatEther } from "viem"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Slider from "rc-slider";
@@ -140,110 +141,218 @@ const ListNFTsPage: NextPage = () => {
     setCurrentPage(pageNumber);
   };
 
+  // 添加粒子动画配置
+  const particles = Array.from({ length: 15 }).map((_, i) => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    duration: 2 + Math.random() * 2,
+    delay: Math.random() * 2,
+  }));
+
+  // 卡片动画配置
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+      },
+    }),
+  };
+
   return (
-    <div className="flex flex-col items-center pt-10">
-      <h1 className="text-4xl font-bold mb-8">正在出售的 NFT</h1>
-
-      {/* 价格筛选滑动条 */}
-      <div className="mb-4 w-full max-w-md">
-        <label className="block mb-2">Price Range (ETH):</label>
-        <Slider
-          range
-          min={0}
-          max={maxPrice} // 使用动态最大价格
-          defaultValue={[0, maxPrice]}
-          onChange={(value) => setPriceRange({ min: value[0], max: value[1] })}
+    <div className="min-h-screen bg-gradient-to-b from-base-300 to-base-100 relative overflow-hidden">
+      {/* 背景粒子效果 */}
+      {particles.map((particle, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-primary rounded-full"
+          animate={{
+            x: ["0%", `${particle.x}%`, "0%"],
+            y: ["0%", `${particle.y}%`, "0%"],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         />
-        <div className="flex justify-between mt-2">
-          <span>{priceRange.min} ETH</span>
-          <span>{priceRange.max} ETH</span>
-        </div>
-      </div>
+      ))}
 
-      {/* 动态属性筛选 */}
-      <div className="mb-4 w-full max-w-md flex flex-wrap gap-4">
-        {Object.keys(traits).map(traitType => (
-          <div key={traitType} className="flex-1 min-w-[150px]">
-            <label className="block mb-2 font-semibold text-lg">{traitType}:</label>
-            <div className="relative">
-              <select
-                className="select select-bordered w-full pl-10 pr-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                onChange={(e) => handleTraitChange(traitType, e.target.value)}
-              >
-                <option value="">All</option>
-                {Array.from(traits[traitType]).map(value => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 3a1 1 0 011 1v1h2a1 1 0 110 2h-2v1a1 1 0 11-2 0V7H7a1 1 0 110-2h2V4a1 1 0 011-1z" />
-                </svg>
-              </span>
+      <div className="flex flex-col items-center pt-10 px-6 relative z-10">
+        {/* 标题动画 */}
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
+              drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+              NFT 市场
+            </span>
+          </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-base-content/80"
+          >
+            发现、收藏独特的数字艺术品
+          </motion.p>
+        </motion.div>
+
+        {/* 筛选器区域 */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="w-full max-w-4xl mb-8 p-6 bg-base-200/50 backdrop-blur-sm rounded-3xl shadow-xl"
+        >
+          {/* 价格筛选 */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold mb-4">价格范围 (ETH)</h3>
+            <Slider
+              range
+              min={0}
+              max={maxPrice}
+              defaultValue={[0, maxPrice]}
+              onChange={(value) => setPriceRange({ min: value[0], max: value[1] })}
+              className="mb-2"
+            />
+            <div className="flex justify-between mt-2 text-sm">
+              <span>{priceRange.min} ETH</span>
+              <span>{priceRange.max} ETH</span>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* NFT 列表展示 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentNFTs.length > 0 ? (
-          currentNFTs.map((nft, index) => {
-            const metadata = nftDetails[nft.tokenId];
-            const priceETH = formatEther(nft.price);
+          {/* 属性筛选 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.keys(traits).map(traitType => (
+              <motion.div
+                key={traitType}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="relative"
+              >
+                <label className="block mb-2 font-semibold">{traitType}</label>
+                <select
+                  className="select select-bordered w-full bg-base-100/50 backdrop-blur-sm"
+                  onChange={(e) => handleTraitChange(traitType, e.target.value)}
+                >
+                  <option value="">全部</option>
+                  {Array.from(traits[traitType]).map(value => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
 
-            return (
-              <div key={index} className="card w-96 bg-base-100 shadow-xl">
-                <figure>
-                  <img
-                    src={metadata?.image || "/placeholder.png"}
-                    alt={metadata?.name || "NFT Image"}
-                    className="w-full h-60 object-cover"
-                    onClick={() => handleViewNFTDetails(nft.tokenId)}
-                  />
-                </figure>
-                <div className="card-body">
-                  <h2 className="card-title">{metadata?.name || "Unnamed NFT"}</h2>
-                  <p className="text-gray-500">{Number(priceETH)} ETH</p>
-                  <div className="card-actions justify-end">
-                    {!isConnected || isConnecting ? (
-                      <RainbowKitCustomConnectButton />
-                    ) : (
-                      <>
-                        <Link href={`/market/nftDetail/${nft.tokenId}`} passHref>
-                          <button className="btn btn-secondary">View Details</button>
-                        </Link>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
+        {/* NFT 列表 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+          <AnimatePresence>
+            {currentNFTs.map((nft, index) => {
+              const metadata = nftDetails[nft.tokenId];
+              const priceETH = formatEther(nft.price);
+
+              return (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                  custom={index}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="card bg-base-100 shadow-xl overflow-hidden group"
+                >
+                  <figure className="relative aspect-square overflow-hidden">
+                    <motion.img
+                      src={metadata?.image || "/placeholder.png"}
+                      alt={metadata?.name || "NFT Image"}
+                      className="w-full h-full object-cover transform-gpu"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </figure>
+
+                  <div className="card-body relative z-10">
+                    <h2 className="card-title text-xl font-bold">
+                      {metadata?.name || "Unnamed NFT"}
+                    </h2>
+                    <p className="text-2xl font-semibold text-primary">
+                      {Number(priceETH)} ETH
+                    </p>
+
+                    {/* 属性标签 */}
+                    <div className="flex flex-wrap gap-2 my-2">
+                      {metadata?.attributes?.slice(0, 3).map((attr, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 bg-primary/10 rounded-full text-xs font-medium"
                         >
-                          Buy NFT
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <p>No NFTs listed for sale.</p>
-        )}
-      </div>
+                          {attr.trait_type}: {attr.value}
+                        </span>
+                      ))}
+                    </div>
 
-      {/* 分页控件 */}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: Math.ceil(filteredNFTs.length / itemsPerPage) }, (_, i) => (
-          <button
-            key={i}
-            className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'} mx-1`}
-            onClick={() => handlePageChange(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
+                    <div className="card-actions justify-end mt-4">
+                      {!isConnected || isConnecting ? (
+                        <RainbowKitCustomConnectButton />
+                      ) : (
+                        <div className="space-x-2">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="btn btn-secondary"
+                            onClick={() => handleViewNFTDetails(nft.tokenId)}
+                          >
+                            查看详情
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="btn btn-primary"
+                            onClick={() => handleBuyNFT(nft.tokenId, nft.price)}
+                          >
+                            购买
+                          </motion.button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* 分页控件 */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex justify-center mt-8 space-x-2"
+        >
+          {Array.from({ length: Math.ceil(filteredNFTs.length / itemsPerPage) }, (_, i) => (
+            <motion.button
+              key={i}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </motion.button>
+          ))}
+        </motion.div>
       </div>
     </div>
   );

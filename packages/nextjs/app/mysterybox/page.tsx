@@ -22,6 +22,12 @@ interface NFTFile {
   ipfsHash?: string;  // 添加ipfsHash字段存储上传后的hash
 }
 
+// 添加属性接口
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
+
 const MysteryBoxPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [price, setPrice] = useState("");
@@ -35,6 +41,9 @@ const MysteryBoxPage: NextPage = () => {
   const [newPrice, setNewPrice] = useState("");
   const [newUri, setNewUri] = useState("");
   const [newUriFile, setNewUriFile] = useState<File | null>(null);
+  const [attributes, setAttributes] = useState<Attribute[]>([
+    { trait_type: "", value: "" }
+  ]);
 
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
@@ -122,6 +131,23 @@ const MysteryBoxPage: NextPage = () => {
     }
   };
 
+  // 添加属性处理函数
+  const handleAttributeChange = (index: number, field: keyof Attribute, value: string) => {
+    const newAttributes = [...attributes];
+    newAttributes[index][field] = value;
+    setAttributes(newAttributes);
+  };
+
+  // 添加新属性
+  const addAttribute = () => {
+    setAttributes([...attributes, { trait_type: "", value: "" }]);
+  };
+
+  // 删除属性
+  const removeAttribute = (index: number) => {
+    setAttributes(attributes.filter((_, i) => i !== index));
+  };
+
   // 修改创建盲盒函数
   const handleCreateMysteryBox = async () => {
     if (!price || nftFiles.length === 0) {
@@ -144,6 +170,7 @@ const MysteryBoxPage: NextPage = () => {
           name: `Mystery NFT #${index + 1}`,
           description: "A mysterious NFT from the mystery box",
           image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${file.ipfsHash}`,
+          attributes: attributes.filter(attr => attr.trait_type && attr.value) // 只包含非空属性
         };
 
         const metadataUpload = await addToIPFS(metadata);
@@ -236,6 +263,7 @@ const MysteryBoxPage: NextPage = () => {
         name: `Mystery NFT #${mysteryBoxInfo ? Number(mysteryBoxInfo.totalOptions) + 1 : 1}`,
         description: "A mysterious NFT from the mystery box",
         image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${uploadedFile.IpfsHash}`,
+        attributes: attributes.filter(attr => attr.trait_type && attr.value) // 只包含非空属性
       };
 
       // 上传元数据到IPFS
@@ -260,7 +288,12 @@ const MysteryBoxPage: NextPage = () => {
 
   return (
     <div className="flex flex-col items-center pt-10 px-6 max-w-6xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8">NFT 盲盒管理</h1>
+      <h1 className="text-5xl font-bold mb-4">
+        <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
+              drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+          NFT 盲盒管理
+        </span>
+      </h1>
 
       {/* 现有盲盒信息 */}
       {mysteryBoxInfo && (
@@ -336,20 +369,26 @@ const MysteryBoxPage: NextPage = () => {
         {/* 版税设置 */}
         <div className="mb-6">
           <label className="block text-lg mb-2">版税比例</label>
-          <input
-            type="number"
-            value={royaltyFee}
-            onChange={e => {
-              const value = Number(e.target.value);
-              if (value <= 1000) {
-                setRoyaltyFee(value);
-              }
-            }}
-            className="input input-bordered w-full"
-            placeholder="输入版税比例 (250 = 2.5%)"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={royaltyFee / 100}
+              onChange={e => {
+                const value = Math.round(parseFloat(e.target.value) * 100);
+                if (!isNaN(value) && value >= 0 && value <= 1000) {
+                  setRoyaltyFee(value);
+                }
+              }}
+              className="input input-bordered flex-1"
+              placeholder="输入版税比例"
+              step="any"
+              min="0"
+              max="10"
+            />
+            <span className="text-lg">%</span>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
-            250 对应 2.5%, 500 是 5%, 1000 是 10%
+            版税比例范围: 0% - 10%
           </p>
         </div>
 
@@ -434,6 +473,58 @@ const MysteryBoxPage: NextPage = () => {
             </div>
           </div>
         )}
+
+        {/* 添加属性设置部分 */}
+        <div className="w-full max-w-3xl border border-gray-300 p-6 rounded-xl shadow-lg mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">NFT 属性设置</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={addAttribute}
+            >
+              添加属性
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {attributes.map((attr, index) => (
+              <div key={index} className="flex gap-4 items-start">
+                <div className="form-control flex-1">
+                  <label className="label">
+                    <span className="label-text">属性名称</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={attr.trait_type}
+                    onChange={(e) => handleAttributeChange(index, 'trait_type', e.target.value)}
+                    placeholder="例如: 背景"
+                  />
+                </div>
+                
+                <div className="form-control flex-1">
+                  <label className="label">
+                    <span className="label-text">属性值</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={attr.value}
+                    onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
+                    placeholder="例如: 蓝色"
+                  />
+                </div>
+
+                <button
+                  className="btn btn-square btn-error btn-sm mt-9"
+                  onClick={() => removeAttribute(index)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* 创建按钮 */}
         <div className="flex justify-center">

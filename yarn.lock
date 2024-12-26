@@ -3605,6 +3605,7 @@ __metadata:
     react-copy-to-clipboard: ^5.1.0
     react-dom: ^18.2.0
     react-dropzone: ^14.3.5
+    react-error-boundary: ^5.0.0
     react-hot-toast: ^2.4.0
     react-json-view: ^1.21.3
     tailwindcss: ^3.4.3
@@ -15970,6 +15971,17 @@ __metadata:
   peerDependencies:
     react: ">= 16.8 || 18.0.0"
   checksum: 9eae7e91f1a786f74234c3a9fcf905691494531861d0c568f260abb770c35edaab7d1e43fe6cb413d77ae56ba286ac1c1606bade46ec15421fd41059f985f6ee
+  languageName: node
+  linkType: hard
+
+"react-error-boundary@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "react-error-boundary@npm:5.0.0"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+  peerDependencies:
+    react: ">=16.13.1"
+  checksum: 4fa78890bb254fe1f0ee1eed893ac161a27482c4567f7667ef83a8339432eb99e323ee69757f01f4864e0037b01a9b6822735ea122f02e749d0bf7a781d9ea53
   languageName: node
   linkType: hard
 

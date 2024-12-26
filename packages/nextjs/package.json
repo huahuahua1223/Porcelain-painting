@@ -36,6 +36,7 @@
     "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.5",
+    "react-error-boundary": "^5.0.0",
     "react-hot-toast": "^2.4.0",
     "react-json-view": "^1.21.3",
     "three": "^0.171.0",

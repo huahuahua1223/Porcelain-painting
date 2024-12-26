@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     YourCollectible: {
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
         {
           inputs: [],
@@ -237,6 +237,63 @@ const deployedContracts = {
           anonymous: false,
           inputs: [
             {
+              indexed: false,
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "totalOptions",
+              type: "uint256",
+            },
+          ],
+          name: "MysteryBoxCreated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "buyer",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "uri",
+              type: "string",
+            },
+          ],
+          name: "MysteryBoxPurchased",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+          ],
+          name: "MysteryBoxStatusChanged",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
               indexed: true,
               internalType: "uint256",
               name: "tokenId",
@@ -456,6 +513,19 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "string",
+              name: "_uri",
+              type: "string",
+            },
+          ],
+          name: "addURIToMysteryBox",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "address",
               name: "to",
               type: "address",
@@ -591,6 +661,29 @@ const deployedContracts = {
             },
           ],
           name: "claimLoyaltyReward",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_price",
+              type: "uint256",
+            },
+            {
+              internalType: "string[]",
+              name: "_possibleURIs",
+              type: "string[]",
+            },
+            {
+              internalType: "uint96",
+              name: "_royaltyFee",
+              type: "uint96",
+            },
+          ],
+          name: "createMysteryBox",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -922,6 +1015,42 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [],
+          name: "getMysteryBoxInfo",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "totalOptions",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getMysteryBoxURIsCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "uint256",
@@ -1136,6 +1265,29 @@ const deployedContracts = {
         },
         {
           inputs: [],
+          name: "mysteryBox",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+            {
+              internalType: "uint96",
+              name: "royaltyFee",
+              type: "uint96",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
           name: "name",
           outputs: [
             {
@@ -1258,6 +1410,13 @@ const deployedContracts = {
           name: "performUpkeep",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "purchaseMysteryBox",
+          outputs: [],
+          stateMutability: "payable",
           type: "function",
         },
         {
@@ -1392,6 +1551,19 @@ const deployedContracts = {
             },
           ],
           name: "setFractionForSale",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_isActive",
+              type: "bool",
+            },
+          ],
+          name: "setMysteryBoxStatus",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -1613,6 +1785,19 @@ const deployedContracts = {
             },
           ],
           name: "transferOwnership",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newPrice",
+              type: "uint256",
+            },
+          ],
+          name: "updateMysteryBoxPrice",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",

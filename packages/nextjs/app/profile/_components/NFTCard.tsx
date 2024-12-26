@@ -23,6 +23,8 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
   const [expiryDate, setExpiryDate] = useState<string>(""); // 到期时间
   const [isRentalModalOpen, setIsRentalModalOpen] = useState(false);
   const [rentalAddress, setRentalAddress] = useState("");
+  const [isListModalOpen, setIsListModalOpen] = useState(false);
+  const [isFractionalizeModalOpen, setIsFractionalizeModalOpen] = useState(false);
 
   const router = useRouter();
 
@@ -91,10 +93,10 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
         if (royaltyInfoResult) {
           // 将 readonly 数组转换为普通数组，然后解构
           const [royaltyReceiver, royaltyAmount] = Array.from(royaltyInfoResult);
-  
+
           console.log("royaltyReceiver:", royaltyReceiver);
           console.log("royaltyAmount:", royaltyAmount);
-  
+
           setRoyaltyAmount(royaltyAmount.toString());
         }
       } catch (error) {
@@ -185,16 +187,16 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
     try {
       // 将选择的日期时间转换为时间戳（秒）
       const expiryTimestamp = Math.floor(new Date(expiryDate).getTime() / 1000);
-      
+
       await writeContractAsync({
         functionName: "setUser",
         args: [BigInt(nft.id), rentalAddress, BigInt(expiryTimestamp)],
       });
-      
+
       notification.success("NFT租赁设置成功!");
-      
+
       // 调用回调函数刷新数据
-      onNFTUpdate();      
+      onNFTUpdate();
     } catch (error) {
       console.error("设置租赁失败:", error);
       notification.error("设置租赁失败");
@@ -335,24 +337,13 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
             </div>
 
             {/* 上架/下架功能 */}
-            {!isListed && (
+            {!isListed && !nft.isRentedByMe && (
               <div className="flex items-center my-2 space-x-3">
-                <span className="text-lg font-semibold">Price(ETH)</span>
-                <input
-                  type="text"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="input input-xs rounded-lg shadow-sm w-20 px-1 py-0.5"
-                  placeholder="Enter price"
-                />
                 <button
                   className="btn btn-primary btn-sm px-4 py-1"
-                  onClick={() => {
-                    calculateRoyalty(price); // 计算版税
-                    handleListNFT();
-                  }}
+                  onClick={() => setIsListModalOpen(true)}
                 >
-                  上架
+                  上架出售
                 </button>
               </div>
             )}
@@ -377,90 +368,164 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
             )} */}
 
             {/* 碎片化功能 */}
-            <div className="flex items-center my-2 space-x-3">
-              <span className="text-lg font-semibold">碎片数量</span>
-              <input
-                type="text"
-                value={fractionCount}
-                onChange={(e) => setFractionCount(e.target.value)}
-                className="input input-xs rounded-lg shadow-sm w-20 px-1 py-0.5"
-                placeholder="输入数量"
-              />
-              <button
-                className="btn btn-primary btn-sm px-4 py-1"
-                onClick={handleFractionalizeNFT}
-              >
-                碎片化
-              </button>
-            </div>
-
-            {/* 只有在 NFT 所有者查看时才显示租赁设置按钮 */}
-            {nft.owner.toLowerCase() === connectedAddress?.toLowerCase() && 
-              (!nft.isRented || (nft.rentExpiry && Math.floor(Date.now() / 1000) > nft.rentExpiry)) && (
+            {!nft.isRentedByMe && (
               <div className="flex items-center my-2 space-x-3">
                 <button
                   className="btn btn-primary btn-sm px-4 py-1"
-                  onClick={() => setIsRentalModalOpen(true)}
+                  onClick={() => setIsFractionalizeModalOpen(true)}
                 >
-                  设置租赁
+                  碎片化
                 </button>
               </div>
             )}
 
+            {/* 只有在 NFT 所有者查看时才显示租赁设置按钮 */}
+            {nft.owner.toLowerCase() === connectedAddress?.toLowerCase() &&
+              (!nft.isRented || (nft.rentExpiry && Math.floor(Date.now() / 1000) > nft.rentExpiry)) && (
+                <div className="flex items-center my-2 space-x-3">
+                  <button
+                    className="btn btn-primary btn-sm px-4 py-1"
+                    onClick={() => setIsRentalModalOpen(true)}
+                  >
+                    设置租赁
+                  </button>
+                </div>
+              )}
+
+            {/* 添加上架弹窗 */}
+            <dialog className={`modal ${isListModalOpen ? "modal-open" : ""}`}>
+              <div className="modal-box">
+                <h3 className="font-bold text-lg mb-4">上架NFT</h3>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">设置价格 (ETH)</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="输入价格"
+                    className="input input-bordered w-full"
+                  />
+                </div>
+                <div className="modal-action">
+                  <button className="btn" onClick={() => setIsListModalOpen(false)}>
+                    取消
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      calculateRoyalty(price);
+                      handleListNFT();
+                      setIsListModalOpen(false);
+                    }}
+                  >
+                    确认上架
+                  </button>
+                </div>
+              </div>
+              <form method="dialog" className="modal-backdrop">
+                <button onClick={() => setIsListModalOpen(false)}>关闭</button>
+              </form>
+            </dialog>
+
+            {/* 添加碎片化弹窗 */}
+            <dialog className={`modal ${isFractionalizeModalOpen ? "modal-open" : ""}`}>
+              <div className="modal-box">
+                <h3 className="font-bold text-lg mb-4">碎片化NFT</h3>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">设置碎片数量</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="2"
+                    step="1"
+                    value={fractionCount}
+                    onChange={(e) => setFractionCount(e.target.value)}
+                    placeholder="输入碎片数量"
+                    className="input input-bordered w-full"
+                  />
+                </div>
+                <div className="modal-action">
+                  <button className="btn" onClick={() => setIsFractionalizeModalOpen(false)}>
+                    取消
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      handleFractionalizeNFT();
+                      setIsFractionalizeModalOpen(false);
+                    }}
+                  >
+                    确认碎片化
+                  </button>
+                </div>
+              </div>
+              <form method="dialog" className="modal-backdrop">
+                <button onClick={() => setIsFractionalizeModalOpen(false)}>关闭</button>
+              </form>
+            </dialog>
+
             {/* 租赁设置弹窗 */}
-            {isRentalModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className=" p-6 rounded-lg w-96">
-                  <h3 className="text-lg font-bold mb-4">设置 NFT 租赁</h3>
+            <dialog className={`modal ${isRentalModalOpen ? "modal-open" : ""}`}>
+              <div className="modal-box">
+                <h3 className="font-bold text-lg mb-4">设置 NFT 租赁</h3>
+                <div className="space-y-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">租赁地址</span>
+                    </label>
+                    <AddressInput
+                      value={rentalAddress}
+                      placeholder="租赁者地址"
+                      onChange={newValue => setRentalAddress(newValue)}
+                    />
+                  </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="label">租赁地址</label>
-                      <AddressInput
-                        value={rentalAddress}
-                        placeholder="租赁者地址"
-                        onChange={newValue => setRentalAddress(newValue)}
-                      />
-                    </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">到期时间</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="input input-bordered w-full"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
 
-                    <div>
-                      <label className="label">到期时间</label>
-                      <input
-                        type="datetime-local"
-                        className="input input-bordered w-full"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        min={new Date().toISOString().slice(0, 16)}
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => setIsRentalModalOpen(false)}
-                      >
-                        取消
-                      </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          handleSetRental();
-                          setIsRentalModalOpen(false);
-                        }}
-                      >
-                        确认
-                      </button>
-                    </div>
+                  <div className="modal-action">
+                    <button
+                      className="btn"
+                      onClick={() => setIsRentalModalOpen(false)}
+                    >
+                      取消
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => {
+                        handleSetRental();
+                        setIsRentalModalOpen(false);
+                      }}
+                    >
+                      确认
+                    </button>
                   </div>
                 </div>
               </div>
-            )}
+              <form method="dialog" className="modal-backdrop">
+                <button onClick={() => setIsRentalModalOpen(false)}>关闭</button>
+              </form>
+            </dialog>
           </div>
         )}
       </div>
     </div>
 
-    
+
   );
 };
 

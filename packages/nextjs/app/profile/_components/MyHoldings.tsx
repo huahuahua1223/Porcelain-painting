@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { NFTCard } from "./NFTCard";
 import { useAccount } from "wagmi";
 import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
@@ -158,11 +159,26 @@ export const MyHoldings = () => {
     updateMyCollectibles();
   }, [connectedAddress, myTotalBalance, refresh]);
 
-  // 获取当前页的NFT（只包含非碎片化的NFT）
+  // 获取当前页的NFT并计算布局类
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return nonFractionalizedNFTs.slice(startIndex, endIndex);
+    const items = nonFractionalizedNFTs.slice(startIndex, endIndex);
+    
+    // 根据items长度决定布局类
+    let gridClassName = "grid gap-6 p-6 ";
+    if (items.length === 1) {
+      gridClassName += "grid-cols-1 max-w-md mx-auto"; // 一个NFT时居中显示
+    } else if (items.length === 2) {
+      gridClassName += "grid-cols-2 max-w-3xl mx-auto"; // 两个NFT时居中显示
+    } else {
+      gridClassName += "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"; // 三个或更多时使用完整宽度
+    }
+
+    return {
+      items,
+      gridClassName,
+    };
   };
 
   // 页面导航函数
@@ -177,68 +193,154 @@ export const MyHoldings = () => {
     }
   }, [totalPages, currentPage]);
 
-  if (allCollectiblesLoading)
+  if (allCollectiblesLoading) {
     return (
-      <div className="flex justify-center items-center mt-10">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <motion.div
+          className="relative"
+          animate={{
+            rotate: 360
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        >
+          <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <motion.div
+            className="absolute inset-0 rounded-full bg-primary/20"
+            animate={{
+              scale: [1, 1.5, 1],
+              opacity: [0.5, 0, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+            }}
+          />
+        </motion.div>
       </div>
     );
+  }
+
+  const { items, gridClassName } = getCurrentPageItems();
 
   return (
-    <>
-      <div className="flex flex-wrap gap-4 my-8 px-5 justify-center">
-        {getCurrentPageItems().map(item => (
-          <div key={item.id}>
-            <NFTCard 
-              nft={item} 
-              onNFTUpdate={handleNFTUpdate}
-            />
-            <LoyaltyRewards 
-              tokenId={item.id}
-              onRewardClaimed={handleNFTUpdate}
-            />
-          </div>
-        ))}
-      </div>
+    <div className="space-y-8">
+      {/* NFT 展示区域 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative"
+      >
+        {/* 背景装饰 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl -z-10" />
+
+        {/* NFT 网格 - 使用动态类名 */}
+        <div className={gridClassName}>
+          <AnimatePresence mode="popLayout">
+            {items.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: index * 0.1 }}
+                className="group"
+              >
+                <div>
+                  <NFTCard
+                    nft={item}
+                    onNFTUpdate={handleNFTUpdate}
+                  />
+                  <LoyaltyRewards
+                    tokenId={item.id}
+                    onRewardClaimed={handleNFTUpdate}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </motion.div>
 
       {/* 分页控件 */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center space-x-2 my-4">
-          <button
-            className="btn btn-sm btn-primary"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-center items-center gap-2 py-6"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary btn-sm"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
             上一页
-          </button>
-          
-          {/* 页码按钮 */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-            <button
-              key={pageNum}
-              className={`btn btn-sm ${currentPage === pageNum ? 'btn-active' : 'btn-ghost'}`}
-              onClick={() => goToPage(pageNum)}
-            >
-              {pageNum}
-            </button>
-          ))}
-          
-          <button
-            className="btn btn-sm btn-primary"
+          </motion.button>
+
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+              <motion.button
+                key={pageNum}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`btn btn-sm ${
+                  currentPage === pageNum
+                    ? 'btn-primary'
+                    : 'btn-ghost hover:btn-primary/20'
+                }`}
+                onClick={() => goToPage(pageNum)}
+              >
+                {pageNum}
+              </motion.button>
+            ))}
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary btn-sm"
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
             下一页
-          </button>
-        </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </motion.button>
+        </motion.div>
       )}
 
-      {/* 添加总数显示 */}
-      <div className="text-center text-sm text-gray-500 mt-2">
-        总共 {nonFractionalizedNFTs.length} 个非碎片化 NFT
-      </div>
+      {/* NFT 统计信息 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-base-100/50 backdrop-blur-md rounded-2xl p-4 text-center shadow-lg border border-base-300/50"
+      >
+        <div className="flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span className="text-base-content/70">
+            总共 {nonFractionalizedNFTs.length} 个非碎片化 NFT
+          </span>
+        </div>
+      </motion.div>
 
-      <FractionOperations onOperationComplete={handleNFTUpdate} />
-    </>
+      {/* 碎片操作组件 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <FractionOperations onOperationComplete={handleNFTUpdate} />
+      </motion.div>
+    </div>
   );
 };

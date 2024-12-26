@@ -36,8 +36,8 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/create",
     icon: <WrenchScrewdriverIcon className="h-4 w-4" />,
     subMenu: [
-      { label: "URI 下载", href: "/ipfsDownload" },
-      { label: "URI 上传", href: "/ipfsUpload" },
+      { label: "IPFS 查询", href: "/ipfsDownload" },
+      { label: "IPFS 上传", href: "/ipfsUpload" },
     ],
   },
   {
@@ -71,11 +71,11 @@ export const menuLinks: HeaderMenuLink[] = [
   //   href: "/ipfsDownload",
   //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
   // },
-  {
-    label: "碎片化",
-    href: "/fractionalize",
-    icon: <ArrowDownTrayIcon className="h-4 w-4" />,
-  },
+  // {
+  //   label: "碎片化",
+  //   href: "/fractionalize",
+  //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
+  // },
   {
     label: "调试合约",
     href: "/debug",
