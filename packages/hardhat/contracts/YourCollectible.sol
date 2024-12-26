@@ -59,7 +59,18 @@ contract YourCollectible is
         bool rewardClaimed;        // 是否已领取奖励
         uint256 lastRewardTime;    // 上次领取奖励的时间
     }
-	
+
+    // 盲盒结构体
+    struct MysteryBox {
+        uint256 price;          // 盲盒价格
+        bool isActive;          // 盲盒是否激活
+        string[] possibleURIs;  // 可能的 NFT URI 列表
+        uint96 royaltyFee;      // 版税比例
+    }
+
+    MysteryBox public mysteryBox;  // 盲盒信息
+    uint256 private nonce = 0;     // 用于生成随机数
+
     // 映射
 	mapping(uint256 => NFTItem) public nftItems; // 存储每个NFT的信息
 	mapping(uint256 => address) public mintedBy; // 保存每个NFT的铸造者
@@ -90,6 +101,9 @@ contract YourCollectible is
     );
     event NFTRedeemed(uint256 indexed tokenId, address indexed redeemer);
     event LoyaltyRewardClaimed(uint256 indexed tokenId, address indexed holder, uint256 amount);
+    event MysteryBoxCreated(uint256 price, uint256 totalOptions);
+    event MysteryBoxPurchased(address indexed buyer, uint256 tokenId, string uri);
+    event MysteryBoxStatusChanged(bool isActive);
 
 	uint256 public lastTimeStamp;    // 上次更新时间
 	uint256 public immutable interval; // 更新间隔
@@ -574,6 +588,94 @@ contract YourCollectible is
         } else {
             nextRewardTime = lastRewardTime + LOYALTY_PERIOD;
         }
+    }
+
+    // 创建盲盒（只有合约拥有者可以调用）
+    function createMysteryBox(
+        uint256 _price, 
+        string[] memory _possibleURIs,
+        uint96 _royaltyFee
+    ) public onlyOwner {
+        require(_possibleURIs.length > 0, "Must provide URIs");
+        require(_price > 0, "Price must be greater than 0");
+        
+        mysteryBox = MysteryBox({
+            price: _price,
+            isActive: true,
+            possibleURIs: _possibleURIs,
+            royaltyFee: _royaltyFee
+        });
+
+        emit MysteryBoxCreated(_price, _possibleURIs.length);
+    }
+
+    // 设置盲盒状态
+    function setMysteryBoxStatus(bool _isActive) public onlyOwner {
+        mysteryBox.isActive = _isActive;
+        emit MysteryBoxStatusChanged(_isActive);
+    }
+
+    // 更新盲盒价格
+    function updateMysteryBoxPrice(uint256 _newPrice) public onlyOwner {
+        require(_newPrice > 0, "Price must be greater than 0");
+        mysteryBox.price = _newPrice;
+    }
+
+    // 添加新的 URI 到盲盒
+    function addURIToMysteryBox(string memory _uri) public onlyOwner {
+        mysteryBox.possibleURIs.push(_uri);
+    }
+
+    // 获取盲盒中可能的 URI 数量
+    function getMysteryBoxURIsCount() public view returns (uint256) {
+        return mysteryBox.possibleURIs.length;
+    }
+
+    // 生成伪随机数
+    function _random() private returns (uint256) {
+        nonce++;
+        return uint256(keccak256(abi.encodePacked(
+            block.timestamp,
+            block.difficulty,
+            msg.sender,
+            nonce
+        )));
+    }
+
+    // 购买盲盒
+    function purchaseMysteryBox() public payable nonReentrant {
+        require(mysteryBox.isActive, "Mystery box is not active");
+        require(msg.value == mysteryBox.price, "Incorrect payment amount");
+        require(mysteryBox.possibleURIs.length > 0, "No NFTs available in mystery box");
+
+        // 生成随机索引
+        uint256 randomIndex = _random() % mysteryBox.possibleURIs.length;
+        string memory selectedURI = mysteryBox.possibleURIs[randomIndex];
+
+        // 铸造 NFT
+        uint256 newTokenId = mintItem(msg.sender, selectedURI, mysteryBox.royaltyFee);
+
+        // 从可能的 URI 列表中移除已使用的 URI（可选）
+        // 如果想让每个 URI 只能使用一次，取消下面的注释
+        /*
+        mysteryBox.possibleURIs[randomIndex] = mysteryBox.possibleURIs[mysteryBox.possibleURIs.length - 1];
+        mysteryBox.possibleURIs.pop();
+        */
+
+        emit MysteryBoxPurchased(msg.sender, newTokenId, selectedURI);
+    }
+
+    // 获取盲盒信息
+    function getMysteryBoxInfo() public view returns (
+        uint256 price,
+        bool isActive,
+        uint256 totalOptions
+    ) {
+        return (
+            mysteryBox.price,
+            mysteryBox.isActive,
+            mysteryBox.possibleURIs.length
+        );
     }
 
 	// 以下函数是 Solidity 所需的重写

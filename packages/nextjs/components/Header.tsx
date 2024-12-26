@@ -46,9 +46,15 @@ export const menuLinks: HeaderMenuLink[] = [
     icon: <ShoppingCartIcon className="h-4 w-4" />,
     subMenu: [
       { label: "碎片化市场", href: "/fractionalize" },
+      { label: "盲盒市场", href: "/market/mysterybox" },
       { label: "3d 模型", href: "/models" },
       // { label: "最新上架", href: "/market/new" },
     ],
+  },
+  {
+    label: "盲盒管理",
+    href: "/mysterybox",
+    icon: <PhotoIcon className="h-4 w-4" />,
   },
   {
     label: "买卖记录",
