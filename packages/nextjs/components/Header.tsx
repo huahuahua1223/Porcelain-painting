@@ -85,6 +85,14 @@ export const menuLinks: HeaderMenuLink[] = [
     //   { label: "高级调试", href: "/debug/advanced" },
     // ],
   },
+  {
+    label: "空投管理",
+    href: "/airdrop",
+    icon: <ArrowDownTrayIcon className="h-4 w-4" />,
+    subMenu: [
+      { label: "领取空投", href: "/claim" },
+    ],
+  },
 ];
 
 export const HeaderMenuLinks = () => {

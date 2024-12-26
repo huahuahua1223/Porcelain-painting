@@ -7,12 +7,31 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     YourCollectible: {
-      address: "0xf5059a5D33d5853360D16C683c16e67980206f36",
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
         {
           inputs: [],
           stateMutability: "payable",
           type: "constructor",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "claimer",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "AirdropClaimed",
+          type: "event",
         },
         {
           anonymous: false,
@@ -218,6 +237,19 @@ const deployedContracts = {
             },
           ],
           name: "LoyaltyRewardClaimed",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "bytes32",
+              name: "merkleRoot",
+              type: "bytes32",
+            },
+          ],
+          name: "MerkleRootSet",
           type: "event",
         },
         {
@@ -660,25 +692,19 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "bytes",
-              name: "checkData",
-              type: "bytes",
-            },
-          ],
-          name: "checkUpkeep",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "upkeepNeeded",
-              type: "bool",
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
             },
             {
-              internalType: "bytes",
-              name: "performData",
-              type: "bytes",
+              internalType: "bytes32[]",
+              name: "proof",
+              type: "bytes32[]",
             },
           ],
-          stateMutability: "view",
+          name: "claimAirdrop",
+          outputs: [],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -715,50 +741,6 @@ const deployedContracts = {
           name: "createMysteryBox",
           outputs: [],
           stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "tokenId",
-              type: "uint256",
-            },
-          ],
-          name: "debugLoyaltyTiming",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "currentTimestamp",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "holdingStartTime",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "holdingDuration",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "lastRewardTime",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "timeSinceLastReward",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "loyaltyPeriod",
-              type: "uint256",
-            },
-          ],
-          stateMutability: "view",
           type: "function",
         },
         {
@@ -1126,13 +1108,19 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [],
-          name: "interval",
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "hasClaimed",
           outputs: [
             {
-              internalType: "uint256",
+              internalType: "bool",
               name: "",
-              type: "uint256",
+              type: "bool",
             },
           ],
           stateMutability: "view",
@@ -1201,13 +1189,29 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [],
-          name: "lastTimeStamp",
-          outputs: [
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
             {
               internalType: "uint256",
-              name: "",
+              name: "tokenId",
               type: "uint256",
+            },
+            {
+              internalType: "bytes32[]",
+              name: "proof",
+              type: "bytes32[]",
+            },
+          ],
+          name: "isWhitelisted",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
             },
           ],
           stateMutability: "view",
@@ -1239,6 +1243,19 @@ const deployedContracts = {
               internalType: "uint256",
               name: "",
               type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "merkleRoot",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
             },
           ],
           stateMutability: "view",
@@ -1429,19 +1446,6 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "bytes",
-              name: "performData",
-              type: "bytes",
-            },
-          ],
-          name: "performUpkeep",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
           inputs: [],
           name: "purchaseMysteryBox",
           outputs: [],
@@ -1580,6 +1584,19 @@ const deployedContracts = {
             },
           ],
           name: "setFractionForSale",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "_merkleRoot",
+              type: "bytes32",
+            },
+          ],
+          name: "setMerkleRoot",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -1915,10 +1932,6 @@ const deployedContracts = {
         setUser: "contracts/IERC4907.sol",
         userExpires: "contracts/IERC4907.sol",
         userOf: "contracts/IERC4907.sol",
-        checkUpkeep:
-          "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol",
-        performUpkeep:
-          "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol",
       },
     },
   },

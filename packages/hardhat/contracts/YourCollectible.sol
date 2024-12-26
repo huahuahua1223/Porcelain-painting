@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2; //Do not change the solidity version as it negatively impacts submission grading
 
-import "hardhat/console.sol";
-import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
+// import "hardhat/console.sol";
+// import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; // 实现 ERC721
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol"; // 实现 ERC721Enumerable
@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/access/Ownable.sol"; // 用于控制合约的权
 import "@openzeppelin/contracts/utils/Counters.sol"; // 用于生成递增的 tokenId
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; // 防止重入攻击
 import "./IERC4907.sol"; // 导入 ERC4907 接口
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract YourCollectible is
 	ERC721,
@@ -20,8 +21,7 @@ contract YourCollectible is
     ERC721Royalty,
 	Ownable,
     ReentrancyGuard,
-    IERC4907,
-    AutomationCompatibleInterface
+    IERC4907
 {
 	using Counters for Counters.Counter;
 
@@ -30,6 +30,7 @@ contract YourCollectible is
     // uint256 public constant LOYALTY_PERIOD = 30 days;    // 忠诚度奖励周期（30天）seconds minutes hours days weeks
     uint256 public constant LOYALTY_PERIOD = 5 minutes;
     uint256 public constant LOYALTY_REWARD = 0.001 ether; // 每次奖励金额
+    bytes32 public merkleRoot; // 默克尔树根
 	
     // NFT结构体
 	struct NFTItem {
@@ -80,7 +81,8 @@ contract YourCollectible is
     mapping(uint256 => address[]) public fractionOwners; // 记录每个 tokenId 的碎片所有者地址
     mapping(uint256 => UserInfo) internal _users; // 记录每个NFT的租赁用户信息
     mapping(uint256 => LoyaltyInfo) public nftLoyalty;  // tokenId => 忠诚度信息
-   
+    mapping(address => bool) public hasClaimed; // 记录地址是否已领取空投
+    
     // 事件
     event NftListed(
         uint256 indexed tokenId,
@@ -104,32 +106,33 @@ contract YourCollectible is
     event MysteryBoxCreated(uint256 price, uint256 totalOptions);
     event MysteryBoxPurchased(address indexed buyer, uint256 tokenId, string uri);
     event MysteryBoxStatusChanged(bool isActive);
+    // 空投事件
+    event AirdropClaimed(address indexed claimer, uint256 tokenId);
+    event MerkleRootSet(bytes32 merkleRoot);
 
-	uint256 public lastTimeStamp;    // 上次更新时间
-	uint256 public immutable interval; // 更新间隔
+	
 
 	constructor() payable ERC721("YourCollectible", "YCB") {
-		lastTimeStamp = block.timestamp;
-		interval = 60; // 60秒更新一次
+		
 	}
 
 	// Chainlink Automation 所需的检查函数
-	function checkUpkeep(bytes calldata  checkData ) 
-		external 
-		view 
-		override 
-		returns (bool upkeepNeeded, bytes memory performData ) 
-	{
-		upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
-	}
+	// function checkUpkeep(bytes calldata  checkData ) 
+	// 	external 
+	// 	view 
+	// 	override 
+	// 	returns (bool upkeepNeeded, bytes memory performData ) 
+	// {
+	// 	upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+	// }
 
 	// Chainlink Automation 所需的执行函数
-	function performUpkeep(bytes calldata performData ) external override {
-		if ((block.timestamp - lastTimeStamp) > interval) {
-			lastTimeStamp = block.timestamp;
-			// 这里可以添加需要定期执行的逻辑
-		}
-	}
+	// function performUpkeep(bytes calldata performData ) external override {
+	// 	if ((block.timestamp - lastTimeStamp) > interval) {
+	// 		lastTimeStamp = block.timestamp;
+	// 		// 这里可以添加需要定期执行的逻辑
+	// 	}
+	// }
 
 	function _baseURI() internal pure override returns (string memory) {
 		return "https://aqua-famous-koala-370.mypinata.cloud/ipfs/";
@@ -170,6 +173,24 @@ contract YourCollectible is
         
 		return tokenId;
 	}
+
+    // 批量铸造NFT
+    function batchMintItems(
+        address to,
+        string[] memory uris,
+        uint96 royaltyFeeNumerator
+    ) public returns (uint256[] memory) {
+        require(uris.length > 0, "Must provide at least one URI");
+        require(uris.length <= 50, "Maximum 50 NFTs can be minted at a time");
+
+        uint256[] memory tokenIds = new uint256[](uris.length);
+
+        for (uint256 i = 0; i < uris.length; i++) {
+            tokenIds[i] = mintItem(to, uris[i], royaltyFeeNumerator);
+        }
+
+        return tokenIds;
+    }
 
     // 获取NFT的铸造者
 	function getMintedBy(uint256 tokenId) public view returns (address) {
@@ -539,14 +560,14 @@ contract YourCollectible is
         uint256 timeSinceLastReward = block.timestamp - loyalty.lastRewardTime;
         // uint256 timeSinceLastReward = lastTimeStamp - loyalty.lastRewardTime;
         
-        // 添加日志事件来帮助调试
-        console.log("Current timestamp:", block.timestamp);
-        console.log("Current timestamp:", lastTimeStamp);
-        console.log("Holding start time:", loyalty.holdingStartTime);
-        console.log("Holding time:", holdingTime);
-        console.log("Last reward time:", loyalty.lastRewardTime);
-        console.log("Time since last reward:", timeSinceLastReward);
-        console.log("Loyalty period:", LOYALTY_PERIOD);
+        // // 添加日志事件来帮助调试
+        // console.log("Current timestamp:", block.timestamp);
+        // console.log("Current timestamp:", lastTimeStamp);
+        // console.log("Holding start time:", loyalty.holdingStartTime);
+        // console.log("Holding time:", holdingTime);
+        // console.log("Last reward time:", loyalty.lastRewardTime);
+        // console.log("Time since last reward:", timeSinceLastReward);
+        // console.log("Loyalty period:", LOYALTY_PERIOD);
         
         // 需要持有超过忠诚度周期，且距离上次领取超过忠诚度周期
         return holdingTime >= LOYALTY_PERIOD && timeSinceLastReward >= LOYALTY_PERIOD;
@@ -735,45 +756,42 @@ contract YourCollectible is
 		return super.supportsInterface(interfaceId); // 检查接口支持
 	}
 
-    // 添加一个调试函数来检查具体的时间信息
-    function debugLoyaltyTiming(uint256 tokenId) public view returns (
-        uint256 currentTimestamp,
-        uint256 holdingStartTime,
-        uint256 holdingDuration,
-        uint256 lastRewardTime,
-        uint256 timeSinceLastReward,
-        uint256 loyaltyPeriod
-    ) {
-        require(_exists(tokenId), "NFT does not exist");
-        
-        LoyaltyInfo memory loyalty = nftLoyalty[tokenId];
-        
-        currentTimestamp = block.timestamp;
-        holdingStartTime = loyalty.holdingStartTime;
-        holdingDuration = block.timestamp - loyalty.holdingStartTime;
-        lastRewardTime = loyalty.lastRewardTime;
-        timeSinceLastReward = block.timestamp - loyalty.lastRewardTime;
-        loyaltyPeriod = LOYALTY_PERIOD;
-        
-        return (currentTimestamp, holdingStartTime, holdingDuration, lastRewardTime, timeSinceLastReward, loyaltyPeriod);
+
+    // 设置默克尔树根（仅管理员可调用）
+    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
+        merkleRoot = _merkleRoot;
+        emit MerkleRootSet(_merkleRoot);
     }
 
-    // 批量铸造NFT
-    function batchMintItems(
-        address to,
-        string[] memory uris,
-        uint96 royaltyFeeNumerator
-    ) public returns (uint256[] memory) {
-        require(uris.length > 0, "Must provide at least one URI");
-        require(uris.length <= 50, "Maximum 50 NFTs can be minted at a time");
-
-        uint256[] memory tokenIds = new uint256[](uris.length);
-
-        for (uint256 i = 0; i < uris.length; i++) {
-            tokenIds[i] = mintItem(to, uris[i], royaltyFeeNumerator);
-        }
-
-        return tokenIds;
+    // 验证地址和tokenId是否在空投白名单中
+    function isWhitelisted(address account, uint256 tokenId, bytes32[] calldata proof) public view returns (bool) {
+        bytes32 leaf = keccak256(abi.encodePacked(account, tokenId));
+        return MerkleProof.verify(proof, merkleRoot, leaf);
     }
 
+    // 领取空投
+    function claimAirdrop(
+        uint256 tokenId,
+        bytes32[] calldata proof
+    ) public nonReentrant {
+        require(merkleRoot != bytes32(0), "Merkle root not set");
+        require(!hasClaimed[msg.sender], "Already claimed");
+        require(
+            isWhitelisted(msg.sender, tokenId, proof),
+            "Not in whitelist or invalid proof"
+        );
+
+        // 标记为已领取
+        hasClaimed[msg.sender] = true;
+
+        // 转移 NFT
+        address owner = ownerOf(tokenId);
+        _transfer(owner, msg.sender, tokenId);
+
+        // 更新 NFT 信息
+        nftItems[tokenId].owner = payable(msg.sender);
+        nftItems[tokenId].isListed = false;
+
+        emit AirdropClaimed(msg.sender, tokenId);
+    }
 }
