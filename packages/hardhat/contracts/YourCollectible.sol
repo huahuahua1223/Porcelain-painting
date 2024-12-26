@@ -758,4 +758,22 @@ contract YourCollectible is
         return (currentTimestamp, holdingStartTime, holdingDuration, lastRewardTime, timeSinceLastReward, loyaltyPeriod);
     }
 
+    // 批量铸造NFT
+    function batchMintItems(
+        address to,
+        string[] memory uris,
+        uint96 royaltyFeeNumerator
+    ) public returns (uint256[] memory) {
+        require(uris.length > 0, "Must provide at least one URI");
+        require(uris.length <= 50, "Maximum 50 NFTs can be minted at a time");
+
+        uint256[] memory tokenIds = new uint256[](uris.length);
+
+        for (uint256 i = 0; i < uris.length; i++) {
+            tokenIds[i] = mintItem(to, uris[i], royaltyFeeNumerator);
+        }
+
+        return tokenIds;
+    }
+
 }

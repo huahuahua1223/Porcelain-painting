@@ -21,6 +21,10 @@ const CreateNFTPage: NextPage = () => {
 
   const publicClient = usePublicClient();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]); // 存储批量上传的文件
+  const [batchPreviews, setBatchPreviews] = useState<string[]>([]); // 存储批量预览图片
+  const [isBatchMode, setIsBatchMode] = useState(false); // 控制是否为批量模式
+  const [batchImageCIDs, setBatchImageCIDs] = useState<string[]>([]); // 存储批量上传的图片CID
 
   // 处理文件上传
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +138,113 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
+  // 处理批量文件上传 - 立即上传到 IPFS
+  const handleBatchFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    if (files.length > 50) {
+      notification.error("Maximum 50 files can be uploaded at once");
+      return;
+    }
+
+    setBatchFiles(files);
+    
+    // 生成预览
+    const previews = files.map(file => URL.createObjectURL(file));
+    setBatchPreviews(previews);
+
+    // 立即上传图片到 IPFS
+    const notificationId = notification.loading("Uploading images to IPFS...");
+    try {
+      const cids: string[] = [];
+      for (const file of files) {
+        const uploadedFile = await uploadFileToIPFS(file);
+        if (uploadedFile && uploadedFile.IpfsHash) {
+          cids.push(uploadedFile.IpfsHash);
+        }
+      }
+      setBatchImageCIDs(cids);
+      notification.remove(notificationId);
+      notification.success(`Successfully uploaded ${cids.length} images to IPFS`);
+    } catch (error) {
+      notification.remove(notificationId);
+      notification.error("Failed to upload images to IPFS");
+      console.error(error);
+    }
+  };
+
+  // 批量铸造NFT - 只处理元数据上传和合约调用
+  const handleBatchMint = async () => {
+    if (batchImageCIDs.length === 0) {
+      notification.error("Please upload images first");
+      return;
+    }
+
+    const notificationId = notification.loading("Creating metadata and minting NFTs...");
+
+    try {
+      const uris: string[] = [];
+      
+      // 为每个图片创建并上传元数据到IPFS
+      for (let i = 0; i < batchImageCIDs.length; i++) {
+        const metadata = {
+          name: `${name} #${i + 1}`,
+          description,
+          image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${batchImageCIDs[i]}`,
+          attributes,
+        };
+
+        // 上传metadata到IPFS
+        const uploadedMetadata = await addToIPFS(metadata);
+        uris.push(uploadedMetadata.IpfsHash);
+      }
+
+      notification.remove(notificationId);
+      notification.success("Metadata created and uploaded to IPFS");
+
+      // 调用智能合约的批量铸造函数
+      const mintTx = await writeContractAsync({
+        functionName: "batchMintItems",
+        args: [connectedAddress, uris, BigInt(royaltyFee)],
+      });
+
+      // 从交易回执中获取返回值tokenIDs
+      const receipt = await publicClient?.getTransactionReceipt({ hash: mintTx as `0x${string}`});
+      
+      // 保存到数据库
+      if (receipt) {
+        const mint_item = new Date();
+        mint_item.setHours(mint_item.getHours() + 8);
+        const mint_item_str = mint_item.toISOString().slice(0, 19).replace('T', ' ');
+
+        // 处理每个铸造的NFT
+        for (let i = 0; i < uris.length; i++) {
+          const data = {
+            nft_id: receipt.logs[i].topics[3] ? parseInt(receipt.logs[i].topics[3] as string, 16) : i + 1,
+            token_uri: uris[i],
+            mint_item: mint_item_str,
+            owner: connectedAddress,
+            state: 0,
+            royaltyFeeNumerator: royaltyFee,
+          };
+          await saveNFTToDB(data);
+        }
+      }
+
+      notification.success("NFTs Minted successfully!");
+      
+      // 清理状态
+      setBatchFiles([]);
+      setBatchPreviews([]);
+      setBatchImageCIDs([]);
+      setIsBatchMode(false);
+    } catch (error) {
+      notification.remove(notificationId);
+      notification.error("Failed to mint NFTs");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center pt-10 px-6 max-w-6xl mx-auto">
       <h1 className="text-5xl font-bold mb-4">
@@ -189,18 +300,20 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           {/* 图片上传部分 */}
           <div className="mb-6">
             <label className="block text-xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              上传图片
+              {isBatchMode ? '批量上传图片' : '上传图片'}
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all hover:border-primary">
               <div className="flex flex-col items-center">
-                <label htmlFor="file-upload" className="cursor-pointer">
+                <label htmlFor={isBatchMode ? "batch-file-upload" : "file-upload"} className="cursor-pointer">
                   <div className="mb-4">
                     <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                       <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <div className="flex text-sm text-gray-600">
-                    <p className="pl-1">点击上传图片或拖放文件到这里</p>
+                    <p className="pl-1">
+                      {isBatchMode ? '点击上传多个图片（最多50个）' : '点击上传图片或拖放文件到这里'}
+                    </p>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     支持 PNG, JPG, GIF 等格式
@@ -208,18 +321,44 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </label>
                 <input
                   type="file"
-                  id="file-upload"
-                  onChange={handleFileChange}
+                  id={isBatchMode ? "batch-file-upload" : "file-upload"}
+                  onChange={isBatchMode ? handleBatchFileChange : handleFileChange}
                   className="hidden"
                   accept="image/*"
+                  multiple={isBatchMode}
                 />
               </div>
-              {imageCID && (
-                <div className="mt-4 text-sm text-green-500 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  图片已上传成功
+
+              {/* 批量预览 */}
+              {isBatchMode && (
+                <div className="mt-4">
+                  {batchPreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4">
+                      {batchPreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          {batchImageCIDs[index] && (
+                            <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-2 text-sm text-gray-500">
+                    {batchImageCIDs.length > 0 ? (
+                      <span className="text-green-500">✓ {batchImageCIDs.length} images uploaded to IPFS</span>
+                    ) : (
+                      <span>Waiting for image upload...</span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -303,59 +442,122 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </div>
         </div>
 
-        {/* 右侧实时预览部分 */}
+        {/* 右侧预览部分 */}
         <div className="w-full lg:w-4/12 border border-gray-300 p-6 rounded-xl shadow-lg bg-base-100">
           <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             NFT 预览
           </h2>
-          <div className="border rounded-xl p-4 shadow-inner bg-base-200">
-            {imagePreview ? (
-              <img 
-                src={imagePreview} 
-                alt="NFT Preview" 
-                className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
-              />
-            ) : (
-              <div className="w-full h-48 bg-base-300 rounded-lg flex items-center justify-center text-gray-500 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-            )}
-            <div className="space-y-3">
-              <p className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                {name || "等待输入名称..."}
-              </p>
-              <p className="text-gray-600 text-sm">
-                {description || "等待输入描述..."}
-              </p>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                属性列表:
-              </h3>
-              {attributes.length > 0 && attributes[0].trait_type ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {attributes.map((attr, idx) => (
-                    <div key={idx} className="bg-base-300 rounded-lg p-2 text-sm">
-                      <span className="font-semibold">{attr.trait_type}:</span> {attr.value}
+          
+          {isBatchMode ? (
+            // 批量模式预览
+            <div className="space-y-4">
+              {batchPreviews.length > 0 ? (
+                batchPreviews.slice(0, 3).map((preview, index) => (
+                  <div key={index} className="border rounded-xl p-4 shadow-inner bg-base-200">
+                    <img 
+                      src={preview} 
+                      alt={`NFT Preview ${index + 1}`} 
+                      className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
+                    />
+                    <div className="space-y-3">
+                      <p className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        {name ? `${name} #${index + 1}` : "等待输入名称..."}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {description || "等待输入描述..."}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                    {attributes.length > 0 && attributes[0].trait_type && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                          属性列表:
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {attributes.map((attr, idx) => (
+                            <div key={idx} className="bg-base-300 rounded-lg p-2 text-sm">
+                              <span className="font-semibold">{attr.trait_type}:</span> {attr.value}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
               ) : (
-                <p className="text-gray-500 text-sm">暂无属性</p>
+                <div className="text-center text-gray-500">
+                  请选择图片进行预览
+                </div>
+              )}
+              {batchPreviews.length > 3 && (
+                <div className="text-center text-gray-500 mt-4">
+                  还有 {batchPreviews.length - 3} 个预览未显示...
+                </div>
               )}
             </div>
-          </div>
+          ) : (
+            // 单个模式预览 (保持原有的预览代码)
+            <div className="border rounded-xl p-4 shadow-inner bg-base-200">
+              {imagePreview ? (
+                <img 
+                  src={imagePreview} 
+                  alt="NFT Preview" 
+                  className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
+                />
+              ) : (
+                <div className="w-full h-48 bg-base-300 rounded-lg flex items-center justify-center text-gray-500 mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+              <div className="space-y-3">
+                <p className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  {name || "等待输入名称..."}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  {description || "等待输入描述..."}
+                </p>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  属性列表:
+                </h3>
+                {attributes.length > 0 && attributes[0].trait_type ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {attributes.map((attr, idx) => (
+                      <div key={idx} className="bg-base-300 rounded-lg p-2 text-sm">
+                        <span className="font-semibold">{attr.trait_type}:</span> {attr.value}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">暂无属性</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* 添加批量模式切换按钮 */}
+      <div className="w-full flex justify-end mb-4">
+        <button
+          className={`btn ${isBatchMode ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setIsBatchMode(!isBatchMode)}
+        >
+          {isBatchMode ? '切换到单个铸造' : '切换到批量铸造'}
+        </button>
       </div>
 
       <div className="flex justify-center mt-6">
         {!isConnected || isConnecting ? (
           <RainbowKitCustomConnectButton />
         ) : (
-          <button className="btn btn-primary" onClick={handleMintItem}>
-            Mint NFT
+          <button 
+            className="btn btn-primary" 
+            onClick={isBatchMode ? handleBatchMint : handleMintItem}
+          >
+            {isBatchMode ? 'Batch Mint NFTs' : 'Mint NFT'}
           </button>
         )}
       </div>
