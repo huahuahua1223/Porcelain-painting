@@ -103,10 +103,10 @@ export default function AirdropPage() {
   const handleSetMerkleRoot = async () => {
     try {
       setLoading(true);
-      await writeContractAsync({
-        functionName: "setMerkleRoot",
-        args: [merkleRoot as `0x${string}`],
-      });
+        await writeContractAsync({
+            functionName: "setMerkleRoot",
+            args: [merkleRoot as `0x${string}`],
+          });
       notification.success("默克尔根设置成功！");
     } catch (error) {
       console.error("设置默克尔根错误:", error);
@@ -493,7 +493,7 @@ export default function AirdropPage() {
 
           {/* 证明列表 */}
           <AnimatePresence>
-            {proofs.length > 0 && (
+          {proofs.length > 0 && (
               <motion.div
                 variants={itemVariants}
                 className="bg-base-100/50 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-base-content/5
@@ -504,17 +504,17 @@ export default function AirdropPage() {
                   默克尔证明列表
                 </h2>
                 <div className="overflow-x-auto rounded-xl">
-                  <table className="table w-full">
-                    <thead>
-                      <tr>
+                <table className="table w-full">
+                  <thead>
+                    <tr>
                         <th className="bg-base-200/50 first:rounded-tl-xl last:rounded-tr-xl">地址</th>
                         <th className="bg-base-200/50">代币 ID</th>
                         <th className="bg-base-200/50">证明</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    </tr>
+                  </thead>
+                  <tbody>
                       <AnimatePresence>
-                        {proofs.map((item, index) => (
+                    {proofs.map((item, index) => (
                           <motion.tr
                             key={index}
                             initial={{ opacity: 0, y: 20 }}
@@ -523,19 +523,19 @@ export default function AirdropPage() {
                             transition={{ delay: index * 0.1 }}
                             className="hover:bg-base-200/30 transition-colors duration-200"
                           >
-                            <td className="font-mono">{item.address}</td>
-                            <td>{item.tokenId}</td>
-                            <td className="font-mono break-all">
+                        <td className="font-mono">{item.address}</td>
+                        <td>{item.tokenId}</td>
+                        <td className="font-mono break-all">
                               <div className="max-h-20 overflow-y-auto">
-                                {JSON.stringify(item.proof)}
+                          {JSON.stringify(item.proof)}
                               </div>
-                            </td>
+                        </td>
                           </motion.tr>
-                        ))}
+                    ))}
                       </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
+                  </tbody>
+                </table>
+              </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -581,7 +581,7 @@ export default function AirdropPage() {
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
+        </div>
     </div>
   );
 } 

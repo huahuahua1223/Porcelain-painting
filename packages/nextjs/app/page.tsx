@@ -46,30 +46,94 @@ const Home: NextPage = () => {
     }
   ];
 
+  // 添加装饰性配置
+  const floatingIcons = [
+    { icon: "🎨", delay: 0 },
+    { icon: "💎", delay: 1 },
+    { icon: "✨", delay: 2 },
+    { icon: "🌟", delay: 3 },
+    { icon: "🎁", delay: 4 },
+  ];
+
+  const particles = Array.from({ length: 30 }).map((_, i) => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    duration: 2 + Math.random() * 3,
+    delay: Math.random() * 2,
+  }));
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-300 to-base-100 relative overflow-hidden">
-      {/* 背景装饰 */}
+    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+      {/* 动态粒子背景 */}
+      {particles.map((particle, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-primary/30 rounded-full"
+          animate={{
+            x: ["0%", `${particle.x}%`, "0%"],
+            y: ["0%", `${particle.y}%`, "0%"],
+            opacity: [0, 1, 0],
+            scale: [0, 1.5, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* 浮动图标 */}
+      {floatingIcons.map((item, index) => (
+        <motion.div
+          key={index}
+          className="absolute text-4xl"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{
+            opacity: [0, 1, 0],
+            y: [-20, -100, -20],
+            x: [Math.random() * 100, Math.random() * -100, Math.random() * 100],
+          }}
+          transition={{
+            duration: 5,
+            delay: item.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+        >
+          {item.icon}
+        </motion.div>
+      ))}
+
+      {/* 背景装饰增强 */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute w-[500px] h-[500px] -top-48 -left-48 bg-primary/20 rounded-full blur-3xl"
+          className="absolute w-[600px] h-[600px] -top-48 -left-48 bg-primary/20 rounded-full blur-[120px]"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
+            rotate: [0, 180, 360],
           }}
           transition={{
-            duration: 8,
+            duration: 15,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
         <motion.div
-          className="absolute w-[500px] h-[500px] -bottom-48 -right-48 bg-secondary/20 rounded-full blur-3xl"
+          className="absolute w-[600px] h-[600px] -bottom-48 -right-48 bg-secondary/20 rounded-full blur-[120px]"
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.5, 0.3, 0.5],
+            rotate: [360, 180, 0],
           }}
           transition={{
-            duration: 8,
+            duration: 15,
             repeat: Infinity,
             ease: "easeInOut"
           }}
@@ -82,15 +146,35 @@ const Home: NextPage = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* 主标题区域 */}
+        {/* 主标题区域增强 */}
         <motion.div variants={itemVariants} className="text-center mb-16">
+          <motion.div
+            animate={{
+              scale: [1, 1.02, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 blur-3xl"
+          />
           <h1 className="text-5xl font-bold mb-6">
-            <span className="block mb-4">
+            <motion.span 
+              className="block mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              style={{ backgroundSize: "200% 200%" }}
+            >
               欢迎来到 NFT 艺术市场
-              {/* <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                {" "}NFT 艺术市场
-              </span> */}
-            </span>
+            </motion.span>
             <span className="text-2xl text-base-content/70">
               探索、创造、交易独特的数字艺术品
             </span>
@@ -118,24 +202,41 @@ const Home: NextPage = () => {
           </motion.div>
         </motion.div>
 
-        {/* 特色功能区域 */}
+        {/* 特色功能区域增强 */}
         <motion.div variants={itemVariants} className="mb-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                className="bg-base-100/50 backdrop-blur-md rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-shadow"
-                whileHover={{ y: -5 }}
+                className="bg-base-100/50 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-base-content/5
+                  hover:shadow-2xl hover:bg-base-100/60 transition-all duration-300"
+                whileHover={{ y: -5, scale: 1.02 }}
               >
-                <span className="text-4xl mb-4 block">{feature.icon}</span>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <motion.span 
+                  className="text-4xl mb-4 block"
+                  animate={{
+                    y: [0, -5, 0],
+                    rotate: [0, 5, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: index * 0.2,
+                  }}
+                >
+                  {feature.icon}
+                </motion.span>
+                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  {feature.title}
+                </h3>
                 <p className="text-base-content/70">{feature.description}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* 行动按钮区域 */}
+        {/* 行动按钮区域增强 */}
         <motion.div variants={itemVariants} className="text-center">
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/market">
@@ -163,6 +264,33 @@ const Home: NextPage = () => {
           >
             加入我们的社区，开启您的 NFT 之旅
           </motion.p>
+        </motion.div>
+
+        {/* 底部装饰 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-12 text-center text-base-content/50"
+        >
+          <div className="flex justify-center gap-4 mb-4">
+            {["🎨", "💎", "✨", "🌟", "🎁"].map((emoji, index) => (
+              <motion.span
+                key={index}
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  delay: index * 0.2,
+                  repeat: Infinity,
+                }}
+                className="text-2xl"
+              >
+                {emoji}
+              </motion.span>
+            ))}
+          </div>
+          <p className="text-sm">探索无限可能的 NFT 世界</p>
         </motion.div>
       </motion.div>
     </div>

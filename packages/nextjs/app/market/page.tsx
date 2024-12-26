@@ -141,13 +141,22 @@ const ListNFTsPage: NextPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  // 添加粒子动画配置
-  const particles = Array.from({ length: 15 }).map((_, i) => ({
+  // 增强粒子动画配置
+  const particles = Array.from({ length: 30 }).map((_, i) => ({
     x: Math.random() * 100,
     y: Math.random() * 100,
-    duration: 2 + Math.random() * 2,
+    duration: 2 + Math.random() * 3,
     delay: Math.random() * 2,
   }));
+
+  // 添加浮动图标配置
+  const floatingIcons = [
+    { icon: "🛍️", delay: 0 },
+    { icon: "💎", delay: 1 },
+    { icon: "🎨", delay: 2 },
+    { icon: "✨", delay: 3 },
+    { icon: "🌟", delay: 4 },
+  ];
 
   // 卡片动画配置
   const cardVariants = {
@@ -163,16 +172,24 @@ const ListNFTsPage: NextPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-300 to-base-100 relative overflow-hidden">
-      {/* 背景粒子效果 */}
+    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+      {/* 渐变光晕背景 */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute w-[500px] h-[500px] -top-48 -left-48 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute w-[500px] h-[500px] -bottom-48 -right-48 bg-secondary/10 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute w-[300px] h-[300px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent/10 rounded-full blur-[100px] animate-pulse" />
+      </div>
+
+      {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-primary rounded-full"
+          className="absolute w-1 h-1 bg-primary/30 rounded-full"
           animate={{
             x: ["0%", `${particle.x}%`, "0%"],
             y: ["0%", `${particle.y}%`, "0%"],
             opacity: [0, 1, 0],
+            scale: [0, 1.5, 0],
           }}
           transition={{
             duration: particle.duration,
@@ -183,14 +200,52 @@ const ListNFTsPage: NextPage = () => {
         />
       ))}
 
+      {/* 浮动图标 */}
+      {floatingIcons.map((item, index) => (
+        <motion.div
+          key={index}
+          className="absolute text-4xl"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{
+            opacity: [0, 1, 0],
+            y: [-20, -100, -20],
+            x: [Math.random() * 100, Math.random() * -100, Math.random() * 100],
+          }}
+          transition={{
+            duration: 5,
+            delay: item.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+        >
+          {item.icon}
+        </motion.div>
+      ))}
+
       <div className="flex flex-col items-center pt-10 px-6 relative z-10">
-        {/* 标题动画 */}
+        {/* 标题部分增强 */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-12"
+          className="text-center mb-12 relative"
         >
-          <h1 className="text-5xl font-bold mb-4">
+          <motion.div
+            animate={{
+              scale: [1, 1.02, 1],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 blur-3xl"
+          />
+          <h1 className="text-5xl font-bold mb-4 relative">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
               drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
               NFT 市场
@@ -206,12 +261,14 @@ const ListNFTsPage: NextPage = () => {
           </motion.p>
         </motion.div>
 
-        {/* 筛选器区域 */}
+        {/* 筛选器区域增强 */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="w-full max-w-4xl mb-8 p-6 bg-base-200/50 backdrop-blur-sm rounded-3xl shadow-xl"
+          className="w-full max-w-4xl mb-8 p-6 bg-base-200/50 backdrop-blur-sm rounded-3xl shadow-xl 
+            border border-base-content/5 hover:shadow-2xl transition-all duration-300"
+          whileHover={{ scale: 1.01 }}
         >
           {/* 价格筛选 */}
           <div className="mb-6">
@@ -255,7 +312,7 @@ const ListNFTsPage: NextPage = () => {
           </div>
         </motion.div>
 
-        {/* NFT 列表 */}
+        {/* NFT 卡片列表增强 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
           <AnimatePresence>
             {currentNFTs.map((nft, index) => {
@@ -269,8 +326,9 @@ const ListNFTsPage: NextPage = () => {
                   initial="hidden"
                   animate="visible"
                   custom={index}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="card bg-base-100 shadow-xl overflow-hidden group"
+                  whileHover={{ scale: 1.02 }}
+                  className="card bg-base-100/50 backdrop-blur-md shadow-xl border border-base-content/5
+                    hover:shadow-2xl hover:bg-base-100/60 transition-all duration-300"
                 >
                   <figure className="relative aspect-square overflow-hidden">
                     <motion.img
@@ -334,7 +392,7 @@ const ListNFTsPage: NextPage = () => {
           </AnimatePresence>
         </div>
 
-        {/* 分页控件 */}
+        {/* 分页控件增强 */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -352,6 +410,33 @@ const ListNFTsPage: NextPage = () => {
               {i + 1}
             </motion.button>
           ))}
+        </motion.div>
+
+        {/* 底部装饰 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-12 text-center text-base-content/50"
+        >
+          <div className="flex justify-center gap-4 mb-4">
+            {["🛍️", "💎", "🎨", "✨", "🌟"].map((emoji, index) => (
+              <motion.span
+                key={index}
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  delay: index * 0.2,
+                  repeat: Infinity,
+                }}
+                className="text-2xl"
+              >
+                {emoji}
+              </motion.span>
+            ))}
+          </div>
+          <p className="text-sm">探索无限可能的 NFT 世界</p>
         </motion.div>
       </div>
     </div>

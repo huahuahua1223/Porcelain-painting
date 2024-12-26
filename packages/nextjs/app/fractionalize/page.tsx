@@ -55,7 +55,7 @@ const Fractionalize: NextPage = () => {
   }, [connectedAddress, fractionsData]);
 
   useEffect(() => {
-    // 在客户端渲染���设置地址
+    // 在客户端渲染���置地址
     if (isConnected) {
       setClientAddress(connectedAddress);
     }
@@ -114,7 +114,23 @@ const Fractionalize: NextPage = () => {
     router.push(`/market/nftDetail/${tokenId}`);
   };
 
-  // 添加动画变体
+  // 添加装饰性配置
+  const floatingIcons = [
+    { icon: "💎", delay: 0 },
+    { icon: "🔄", delay: 1 },
+    { icon: "✨", delay: 2 },
+    { icon: "📈", delay: 3 },
+    { icon: "🌟", delay: 4 },
+  ];
+
+  const particles = Array.from({ length: 30 }).map((_, i) => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    duration: 2 + Math.random() * 3,
+    delay: Math.random() * 2,
+  }));
+
+  // 动画变体配置
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -129,136 +145,226 @@ const Fractionalize: NextPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-300 to-base-100 relative overflow-hidden">
-      {/* 背景装饰 */}
+    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+      {/* 动态粒子背景 */}
+      {particles.map((particle, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-primary/30 rounded-full"
+          animate={{
+            x: ["0%", `${particle.x}%`, "0%"],
+            y: ["0%", `${particle.y}%`, "0%"],
+            opacity: [0, 1, 0],
+            scale: [0, 1.5, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* 渐变光晕背景 */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-96 h-96 -top-48 -left-48 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute w-96 h-96 -bottom-48 -right-48 bg-secondary/20 rounded-full blur-3xl" />
+        <motion.div
+          className="absolute w-[500px] h-[500px] -top-48 -left-48 bg-primary/10 rounded-full blur-[100px]"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute w-[500px] h-[500px] -bottom-48 -right-48 bg-secondary/10 rounded-full blur-[100px]"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 py-10">
+      {/* 浮动图标 */}
+      {floatingIcons.map((item, index) => (
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          key={index}
+          className="absolute text-4xl"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{
+            opacity: [0, 1, 0],
+            y: [-20, -100, -20],
+            x: [Math.random() * 100, Math.random() * -100, Math.random() * 100],
+          }}
+          transition={{
+            duration: 5,
+            delay: item.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+        >
+          {item.icon}
+        </motion.div>
+      ))}
+
+      <motion.div
+        className="relative z-10 container mx-auto px-6 py-10"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* 标题部分 */}
+        <motion.div variants={itemVariants} className="text-center mb-12">
+          <h1 className="text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              NFT 碎片化交易
+            </span>
+          </h1>
+          <p className="text-xl text-base-content/70">
+            将您的 NFT 转化为可交易的代币份额
+          </p>
+        </motion.div>
+
+        {/* 操作指南卡片 */}
+        <motion.div
+          variants={itemVariants}
+          className="mb-8 bg-base-100/50 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-base-content/5"
+        >
+          <div className="flex items-start gap-4">
+            <div className="text-3xl">💡</div>
+            <div>
+              <h3 className="text-lg font-bold mb-2">交易指南</h3>
+              <ul className="space-y-2 text-base-content/70">
+                <motion.li
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-primary">•</span>
+                  选择要交易的 NFT 碎片
+                </motion.li>
+                <motion.li
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-primary">•</span>
+                  输入交易数量和价格
+                </motion.li>
+                <motion.li
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-primary">•</span>
+                  确认交易并等待完成
+                </motion.li>
+              </ul>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* 主要内容区域 */}
+        <motion.div
+          variants={itemVariants}
           className="space-y-8"
         >
-          {/* 标题部分 */}
-          <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
-              drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                NFT碎片化市场
-              </span>
-            </h1>
-            <p className="text-xl text-base-content/70">
-              探索、交易独特的 NFT 碎片
-            </p>
-          </motion.div>
-
-          {/* 用户信息卡片 */}
-          <motion.div
-            variants={itemVariants}
-            className="bg-base-100/70 backdrop-blur-md rounded-3xl p-6 shadow-xl"
-          >
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-base-content/70">当前连接地址</p>
-                  {clientAddress ? (
-                    <Address address={clientAddress} format="long" />
-                  ) : (
-                    <span className="loading loading-dots">Loading</span>
-                  )}
-                </div>
-              </div>
-              <div className="stat bg-base-200/50 rounded-xl px-6">
-                <div className="stat-title">在售碎片</div>
-                <div className="stat-value text-primary">{fractionDetails.length}</div>
-              </div>
-            </div>
-          </motion.div>
-
           {/* 碎片列表 */}
           <motion.div
-            variants={itemVariants}
-            className="bg-base-100/70 backdrop-blur-md rounded-3xl p-8 shadow-xl"
+            className="bg-base-100/50 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-base-content/5
+              hover:shadow-2xl hover:bg-base-100/60 transition-all duration-300"
+            whileHover={{ scale: 1.01 }}
           >
+            <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              可交易碎片列表
+            </h2>
+            
             <div className="overflow-x-auto">
-              {fractionDetails.length > 0 ? (
-                <table className="table w-full">
-                  <thead>
-                    <tr>
-                      <th className="bg-base-200/50">Token ID</th>
-                      <th className="bg-base-200/50">拥有者</th>
-                      <th className="bg-base-200/50">数量</th>
-                      <th className="bg-base-200/50">单价 (ETH)</th>
-                      <th className="bg-base-200/50">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <AnimatePresence>
-                      {fractionDetails.map(({ tokenId, owner, amount, price }, index) => (
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th className="bg-base-200/50">Token ID</th>
+                    <th className="bg-base-200/50">拥有者</th>
+                    <th className="bg-base-200/50">数量</th>
+                    <th className="bg-base-200/50">价格</th>
+                    <th className="bg-base-200/50">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {fractionDetails.length === 0 ? (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <td colSpan={5} className="text-center py-8">
+                          <p className="text-base-content/70">暂无可交易的碎片</p>
+                        </td>
+                      </motion.tr>
+                    ) : (
+                      fractionDetails.map((fraction, index) => (
                         <motion.tr
-                          key={tokenId}
+                          key={`${fraction.tokenId}-${fraction.owner}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
                           transition={{ delay: index * 0.1 }}
                           className="hover:bg-base-200/50"
                         >
+                          <td>{fraction.tokenId}</td>
                           <td>
-                            <Link
-                              href={`/market/nftDetail/${tokenId}`}
-                              className="text-primary hover:text-primary-focus transition-colors"
-                            >
-                              #{tokenId}
-                            </Link>
+                            <Address address={fraction.owner as `0x${string}`} />
                           </td>
-                          <td><Address address={owner} format="long" /></td>
-                          <td>{amount}</td>
-                          <td>{formatEther(price)} ETH</td>
+                          <td>{fraction.amount}</td>
+                          <td>{formatEther(fraction.price)} ETH</td>
                           <td>
                             <div className="flex gap-2">
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="btn btn-neutral btn-sm"
-                                onClick={() => handleViewDetails(tokenId)}
+                                className="btn btn-primary btn-sm"
+                                onClick={() => {
+                                  setSelectedTokenIdForBuy(fraction.tokenId);
+                                  setSelectedOwnerForBuy(fraction.owner);
+                                  setSelectedPriceForBuy(fraction.price);
+                                  setShowBuyModal(true);
+                                }}
                               >
-                                查看详情
+                                购买
                               </motion.button>
-                              {connectedAddress !== owner && (
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className="btn btn-primary btn-sm"
-                                  onClick={() => {
-                                    setSelectedTokenIdForBuy(tokenId);
-                                    setSelectedOwnerForBuy(owner);
-                                    setSelectedPriceForBuy(BigInt(price));
-                                    setShowBuyModal(true);
-                                  }}
-                                >
-                                  购买
-                                </motion.button>
-                              )}
-                              {connectedAddress === owner && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleViewDetails(fraction.tokenId)}
+                              >
+                                详情
+                              </motion.button>
+                              {fraction.owner === clientAddress && (
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                   className="btn btn-error btn-sm"
-                                  onClick={() => handleCancelSale(tokenId)}
+                                  onClick={() => handleCancelSale(fraction.tokenId)}
                                 >
                                   下架
                                 </motion.button>
@@ -266,72 +372,91 @@ const Fractionalize: NextPage = () => {
                             </div>
                           </td>
                         </motion.tr>
-                      ))}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
-              ) : (
-                <div className="text-center py-10 text-base-content/70">
-                  暂无碎片在售
-                </div>
-              )}
+                      ))
+                    )}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
           </motion.div>
+
+          {/* 购买模态框 */}
+          {showBuyModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-base-100 rounded-3xl p-6 shadow-xl max-w-md w-full mx-4"
+              >
+                <h3 className="text-xl font-bold mb-4">购买碎片</h3>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">购买数量</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={buyAmount}
+                    onChange={(e) => setBuyAmount(e.target.value)}
+                    min="1"
+                  />
+                </div>
+                <div className="mt-6 flex gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`btn btn-primary flex-1 ${loading ? "loading" : ""}`}
+                    onClick={handleBuyFraction}
+                    disabled={loading}
+                  >
+                    确认购买
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="btn btn-ghost flex-1"
+                    onClick={() => setShowBuyModal(false)}
+                  >
+                    取消
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </motion.div>
-      </div>
 
-      {/* 购买模态框 */}
-      <dialog className={`modal ${showBuyModal ? "modal-open" : ""}`}>
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">购买 NFT 碎片</h3>
-
-          <div className="space-y-4">
-            <div className="bg-base-200/50 p-4 rounded-xl">
-              <p className="text-sm text-base-content/70">Token ID</p>
-              <p className="text-lg font-semibold">#{selectedTokenIdForBuy}</p>
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">购买数量</span>
-              </label>
-              <input
-                type="number"
-                className="input input-bordered w-full"
-                value={buyAmount}
-                onChange={(e) => setBuyAmount(e.target.value)}
-                placeholder="输入购买数量"
-              />
-            </div>
-
-            <div className="modal-action">
-              <button
-                className="btn"
-                onClick={() => setShowBuyModal(false)}
-              >
-                取消
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  handleBuyFraction();
-                  setShowBuyModal(false);
+        {/* 底部装饰 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-12 text-center text-base-content/50"
+        >
+          <div className="flex justify-center gap-4 mb-4">
+            {["💎", "🔄", "📈", "✨", "🌟"].map((emoji, index) => (
+              <motion.span
+                key={index}
+                animate={{
+                  y: [0, -10, 0],
                 }}
-                disabled={loading}
+                transition={{
+                  duration: 2,
+                  delay: index * 0.2,
+                  repeat: Infinity,
+                }}
+                className="text-2xl"
               >
-                {loading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  "确认购买"
-                )}
-              </button>
-            </div>
+                {emoji}
+              </motion.span>
+            ))}
           </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowBuyModal(false)}>关闭</button>
-        </form>
-      </dialog>
+          <p className="text-sm">开启 NFT 碎片化交易新时代</p>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
