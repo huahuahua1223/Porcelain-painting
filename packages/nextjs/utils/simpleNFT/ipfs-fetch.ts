@@ -11,13 +11,27 @@ const fetchFromApi = ({ path, method, body }: { path: string; method: string; bo
 
 export const addToIPFS = (yourJSON: object) => fetchFromApi({ path: "/api/ipfs/add", method: "Post", body: yourJSON });
 
-export const saveNFTToDB = (data: object) => {
-  return fetchFromApi({
-    path: `/api/nft/data`, 
-    method: 'POST', 
-    body: { data }
-  });
+export const saveNFTToDB = async (data: any) => {
+  try {
+    const response = await fetch('/api/nft/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save NFT data');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving NFT data:', error);
+    throw error;
+  }
 };
+
 export const uploadFileToIPFS = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -79,4 +93,46 @@ export const getMetadataFromIPFS = async (tokenURI: string) => {
     throw error;
   }
 }
+
+export const collectNFT = async (data: any) => {
+  try {
+    const response = await fetch('/api/nft/collect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to collect NFT');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error collecting NFT:', error);
+    throw error;
+  }
+};
+
+export const reportNFT = async (data: any) => {
+  try {
+    const response = await fetch('/api/nft/report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to report NFT');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error reporting NFT:', error);
+    throw error;
+  }
+};
   

@@ -162,14 +162,6 @@ contract YourCollectible is
             isListed: false,
             tokenUri: completeTokenURI
         });
-
-        // 初始化忠诚度信息
-        // holdingStartTime: lastTimeStamp,
-        nftLoyalty[tokenId] = LoyaltyInfo({
-            holdingStartTime: block.timestamp,
-            rewardClaimed: false,
-            lastRewardTime: 0
-        });
         
 		return tokenId;
 	}
@@ -699,6 +691,55 @@ contract YourCollectible is
         );
     }
 
+    // 获取盲盒中所有可能的 URI
+    // function getMysteryBoxURIs() public view returns (string[] memory) {
+    //     require(mysteryBox.possibleURIs.length > 0, "No URIs in mystery box");
+    //     return mysteryBox.possibleURIs;
+    // }
+
+    // 获取盲盒完整信息
+    // function getMysteryBox() public view returns (MysteryBox memory) {
+    //     return mysteryBox;
+    // }
+
+    // 设置默克尔树根（仅管理员可调用）
+    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
+        merkleRoot = _merkleRoot;
+        emit MerkleRootSet(_merkleRoot);
+    }
+
+    // 验证地址和tokenId是否在空投白名单中
+    function isWhitelisted(address account, uint256 tokenId, bytes32[] calldata proof) public view returns (bool) {
+        bytes32 leaf = keccak256(abi.encodePacked(account, tokenId));
+        return MerkleProof.verify(proof, merkleRoot, leaf);
+    }
+
+    // 领取空投
+    function claimAirdrop(
+        uint256 tokenId,
+        bytes32[] calldata proof
+    ) public nonReentrant {
+        require(merkleRoot != bytes32(0), "Merkle root not set");
+        require(!hasClaimed[msg.sender], "Already claimed");
+        require(
+            isWhitelisted(msg.sender, tokenId, proof),
+            "Not in whitelist or invalid proof"
+        );
+
+        // 标记为已领取
+        hasClaimed[msg.sender] = true;
+
+        // 转移 NFT
+        address owner = ownerOf(tokenId);
+        _transfer(owner, msg.sender, tokenId);
+
+        // 更新 NFT 信息
+        nftItems[tokenId].owner = payable(msg.sender);
+        nftItems[tokenId].isListed = false;
+
+        emit AirdropClaimed(msg.sender, tokenId);
+    }
+
 	// 以下函数是 Solidity 所需的重写
 	function _beforeTokenTransfer(
 		address from,
@@ -757,41 +798,5 @@ contract YourCollectible is
 	}
 
 
-    // 设置默克尔树根（仅管理员可调用）
-    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
-        merkleRoot = _merkleRoot;
-        emit MerkleRootSet(_merkleRoot);
-    }
 
-    // 验证地址和tokenId是否在空投白名单中
-    function isWhitelisted(address account, uint256 tokenId, bytes32[] calldata proof) public view returns (bool) {
-        bytes32 leaf = keccak256(abi.encodePacked(account, tokenId));
-        return MerkleProof.verify(proof, merkleRoot, leaf);
-    }
-
-    // 领取空投
-    function claimAirdrop(
-        uint256 tokenId,
-        bytes32[] calldata proof
-    ) public nonReentrant {
-        require(merkleRoot != bytes32(0), "Merkle root not set");
-        require(!hasClaimed[msg.sender], "Already claimed");
-        require(
-            isWhitelisted(msg.sender, tokenId, proof),
-            "Not in whitelist or invalid proof"
-        );
-
-        // 标记为已领取
-        hasClaimed[msg.sender] = true;
-
-        // 转移 NFT
-        address owner = ownerOf(tokenId);
-        _transfer(owner, msg.sender, tokenId);
-
-        // 更新 NFT 信息
-        nftItems[tokenId].owner = payable(msg.sender);
-        nftItems[tokenId].isListed = false;
-
-        emit AirdropClaimed(msg.sender, tokenId);
-    }
 }

@@ -8,7 +8,7 @@ import { Address } from "~~/components/scaffold-eth";
 import { format } from "date-fns";
 import { formatEther, parseEther } from "viem";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
-import { getMetadataFromIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
+import { getMetadataFromIPFS, collectNFT, reportNFT } from "~~/utils/simpleNFT/ipfs-fetch";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
@@ -22,6 +22,9 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const [isFractionalizeModalOpen, setIsFractionalizeModalOpen] = useState(false);
     const [listingPrice, setListingPrice] = useState("");
     const [fractionCount, setFractionCount] = useState("");
+    const [isCollected, setIsCollected] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     // 根据tokenId获取NFT合约存储的数据：tokenId, price, owner, isListed, tokenUri
     const { data: nftData, isLoading, error } = useScaffoldReadContract({
@@ -96,7 +99,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         watch: true, // 轮询
     });
 
-    // 添加动画��体
+    // 添加动画体
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -159,6 +162,60 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         } catch (error) {
             console.error("碎片化失败:", error);
             notification.error("碎片化失败");
+        }
+    };
+
+    // 修改收藏处理函数
+    const handleCollect = async () => {
+        if (!connectedAddress) {
+            notification.error("请先连接钱包");
+            return;
+        }
+
+        try {
+            const response = await collectNFT({
+                nft_id: tokenId,
+                user_address: connectedAddress,
+                collected_at: new Date().toISOString()
+            });
+
+            if (response.success) {
+                setIsCollected(!isCollected);
+                notification.success(isCollected ? "取消收藏成功" : "收藏成功");
+            } else {
+                notification.error(response.error || "操作失败");
+            }
+        } catch (error) {
+            console.error("收藏操作失败:", error);
+            notification.error("操作失败");
+        }
+    };
+
+    // 修改举报处理函数
+    const handleReport = async () => {
+        if (!connectedAddress) {
+            notification.error("请先连接钱包");
+            return;
+        }
+
+        try {
+            const response = await reportNFT({
+                nft_id: tokenId,
+                reporter_address: connectedAddress,
+                reason: reportReason,
+                reported_at: new Date().toISOString()
+            });
+
+            if (response.success) {
+                notification.success("举报成功");
+                setIsReportModalOpen(false);
+                setReportReason("");
+            } else {
+                notification.error(response.error || "举报失败");
+            }
+        } catch (error) {
+            console.error("举报失败:", error);
+            notification.error("举报失败");
         }
     };
 
@@ -337,6 +394,22 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                                             )}
                                         </>
                                     )}
+                                    <motion.button
+                                        className={`btn ${isCollected ? 'btn-secondary' : 'btn-outline'}`}
+                                        onClick={handleCollect}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        {isCollected ? '取消收藏' : '收藏'}
+                                    </motion.button>
+                                    <motion.button
+                                        className="btn btn-outline btn-error"
+                                        onClick={() => setIsReportModalOpen(true)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        举报
+                                    </motion.button>
                                 </motion.div>
                             </div>
                         </div>
@@ -459,6 +532,35 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                 </div>
                 <form method="dialog" className="modal-backdrop">
                     <button onClick={() => setIsFractionalizeModalOpen(false)}>关闭</button>
+                </form>
+            </dialog>
+
+            {/* 举报弹窗 */}
+            <dialog className={`modal ${isReportModalOpen ? "modal-open" : ""}`}>
+                <div className="modal-box">
+                    <h3 className="font-bold text-lg mb-4">举报 NFT</h3>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">举报原因</span>
+                        </label>
+                        <textarea
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                            placeholder="请输入举报原因"
+                            className="textarea textarea-bordered h-24"
+                        />
+                    </div>
+                    <div className="modal-action">
+                        <button className="btn" onClick={() => setIsReportModalOpen(false)}>
+                            取消
+                        </button>
+                        <button className="btn btn-error" onClick={handleReport}>
+                            确认举报
+                        </button>
+                    </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                    <button onClick={() => setIsReportModalOpen(false)}>关闭</button>
                 </form>
             </dialog>
         </div>
