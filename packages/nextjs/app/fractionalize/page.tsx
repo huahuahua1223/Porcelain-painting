@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import type { NextPage } from "next";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
 import { Address } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { formatEther } from "viem";
 import { useRouter } from "next/navigation";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 const Fractionalize: NextPage = () => {
   const [loading, setLoading] = useState(false);
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
+  const publicClient = usePublicClient();
   const [fractionDetails, setFractionDetails] = useState<{ tokenId: number; amount: number }[]>([]);
   const [clientAddress, setClientAddress] = useState<string | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
@@ -75,11 +77,28 @@ const Fractionalize: NextPage = () => {
       const totalPriceWei = selectedPriceForBuy * BigInt(parseInt(buyAmount, 10));
       console.log("Total Price (Wei):", totalPriceWei);
 
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "buyFraction",
         args: [selectedTokenIdForBuy, selectedOwnerForBuy, parseInt(buyAmount, 10)],
         value: totalPriceWei,
       });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'buyFraction',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       notification.success("Fraction purchase successful!");
       fetchFractions(); // 更新页面数据
       setShowBuyModal(false); // 关闭模态框
@@ -95,10 +114,27 @@ const Fractionalize: NextPage = () => {
   const handleCancelSale = async (tokenId: number) => {
     try {
       setLoading(true);
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "cancelFractionSale",
         args: [tokenId],
       });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'cancelFractionSale',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       notification.success("Fraction sale cancelled!");
       fetchFractions(); // 更新页面数据
     } catch (error) {

@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useScaffoldReadContract, useScaffoldWriteContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { AddressInput, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { useRouter } from "next/navigation";
 import { parseEther, formatEther } from "viem";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 export const FractionOperations = ({ onOperationComplete }: { onOperationComplete: () => void }) => {
     const { address: connectedAddress } = useAccount();
+    const publicClient = usePublicClient();
     const [fractionDetails, setFractionDetails] = useState<{ tokenId: number; amount: number }[]>([]);
     const [transferAddress, setTransferAddress] = useState<string>("");
     const [transferAmount, setTransferAmount] = useState<number>(0);
@@ -53,10 +55,27 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
             return;
         }
         try {
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "transferFraction",
                 args: [BigInt(selectedTokenId), transferAddress as `0x${string}`, BigInt(transferAmount)],
             });
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'transferFraction',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.success("转赠成功！");
             onOperationComplete();
             setShowTransferModal(false);
@@ -73,10 +92,27 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
         }
         try {
             const priceWei = parseEther(salePrice.toString());
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "setFractionForSale",
                 args: [BigInt(selectedTokenId), priceWei],
             });
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'setFractionForSale',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.success("碎片已上架！");
             onOperationComplete();
             setShowSaleModal(false);
@@ -90,13 +126,30 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
         if (!tokenId) {
             notification.error("Invalid Token ID");
             return;
-          }
+        }
           
         try {
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "redeemNFT",
                 args: [BigInt(tokenId)],
             });
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'redeemNFT',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.success("赎回成功！");
             onOperationComplete();
         } catch (error) {

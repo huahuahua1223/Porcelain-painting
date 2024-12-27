@@ -5,9 +5,10 @@ import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract 
 import { notification } from "~~/utils/scaffold-eth";
 import { parseEther, formatEther } from "viem";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei"; // 用于加载和展示 .glb 文件
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: () => void }) => {
   const { address: connectedAddress } = useAccount();
@@ -45,6 +46,8 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
     functionName: "getMintedBy",
     args: [BigInt(nft.id.toString())],
   });
+
+  const publicClient = usePublicClient();
 
   useEffect(() => {
     if (nftItem) {
@@ -114,20 +117,32 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
       return;
     }
 
-    console.log("价格:", price);
-    const priceWei = parseEther(price); // 将 ETH 转换为 wei
-    console.log("价格 (wei):", priceWei);
-
+    const priceWei = parseEther(price);
     // 0.025 ETH 手续费，使用 parseEther 转换为 wei
-    const listingFee = parseEther("0.025"); // 转换 0.025 ETH 为 wei
+    const listingFee = parseEther("0.025");
 
     try {
       setLoading(true);
-
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "listItem",
         args: [BigInt(nft.id), priceWei],
-        value: listingFee, // 发送手续费
+        value: listingFee,
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'listItem',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
       });
 
       notification.success("NFT listed successfully!");
@@ -161,10 +176,25 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
     try {
       setLoading(true);
-
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "fractionalizeNFT",
         args: [BigInt(nft.id), BigInt(fractionCount)],
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'fractionalizeNFT',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
       });
 
       notification.success("NFT 碎片化成功!");
@@ -187,10 +217,25 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
     try {
       // 将选择的日期时间转换为时间戳（秒）
       const expiryTimestamp = Math.floor(new Date(expiryDate).getTime() / 1000);
-
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "setUser",
         args: [BigInt(nft.id), rentalAddress, BigInt(expiryTimestamp)],
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'setUser',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
       });
 
       notification.success("NFT租赁设置成功!");
@@ -321,14 +366,33 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
             <div className="card-actions justify-end">
               <button
                 className="btn btn-secondary btn-md px-8 tracking-wide"
-                onClick={() => {
+                onClick={async () => {
                   try {
-                    writeContractAsync({
+                    const tx = await writeContractAsync({
                       functionName: "transferFrom",
                       args: [nft.owner as `0x${string}`, transferToAddress as `0x${string}`, BigInt(nft.id.toString())],
                     });
+
+                    // 等待交易被确认并获取回执
+                    const receipt = await publicClient.waitForTransactionReceipt({ 
+                      hash: tx as `0x${string}` 
+                    });
+
+                    // 保存gas记录
+                    await saveGasRecord({
+                      tx_hash: receipt?.transactionHash,
+                      method_name: 'transferFrom',
+                      gas_used: receipt?.gasUsed,
+                      gas_price: receipt?.effectiveGasPrice,
+                      total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                      user_address: connectedAddress as string,
+                      block_number: receipt?.blockNumber
+                    });
+
+                    notification.success("NFT transferred successfully!");
                   } catch (err) {
                     console.error("Error calling transferFrom function");
+                    notification.error("Transfer failed");
                   }
                 }}
               >

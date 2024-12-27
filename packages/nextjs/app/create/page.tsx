@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { uploadFileToIPFS, addToIPFS, saveNFTToDB } from "~~/utils/simpleNFT/ipfs-fetch";
+import { uploadFileToIPFS, addToIPFS, saveNFTToDB, saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 // import { MyHoldings } from "./_components";
 import { usePublicClient } from "wagmi";
 import { motion } from "framer-motion";
@@ -107,17 +107,30 @@ const CreateNFTPage: NextPage = () => {
       notification.success("Metadata uploaded to IPFS");
 
       // 调用智能合约铸造 NFT
-      const mintTx = await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "mintItem",
         args: [connectedAddress, uploadedItem.IpfsHash, royaltyFee],
       });
 
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient?.getTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'mintItem',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       // 从交易回执中获取返回值tokenID
-      const receipt = await publicClient?.getTransactionReceipt({ hash: mintTx as `0x${string}`})
-      console.log("receipt==========>", receipt);
       const nft_id = receipt?.logs[0].topics[3];
-      const numericId = parseInt(nft_id as `0x${string}`, 16)
-      console.log("numericId==========>" + numericId);
+      const numericId = parseInt(nft_id as `0x${string}`, 16);
 
       const mint_item = new Date();
       // 转换到UTC+8
@@ -220,13 +233,26 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       notification.success("Metadata created and uploaded to IPFS");
 
       // 调用智能合约的批量铸造函数
-      const mintTx = await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "batchMintItems",
         args: [connectedAddress, uris, BigInt(royaltyFee)],
       });
 
-      // 从交易回执中获取返回值tokenIDs
-      const receipt = await publicClient?.getTransactionReceipt({ hash: mintTx as `0x${string}`});
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient?.getTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'batchMintItems',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
       
       // 保存到数据库
       if (receipt) {
@@ -248,7 +274,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         }
       }
 
-      notification.success("NFTs Minted successfully!");
+      notification.success(`Successfully minted ${uris.length} NFTs!`);
       
       // 清理状态
       setBatchFiles([]);
@@ -256,8 +282,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setBatchImageCIDs([]);
       setIsBatchMode(false);
     } catch (error) {
-      notification.remove(notificationId);
-      notification.error("Failed to mint NFTs");
+      notification.error("Failed to batch mint NFTs");
       console.error(error);
     }
   };

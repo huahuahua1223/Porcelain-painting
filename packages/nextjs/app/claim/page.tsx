@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
 import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 type ProofInfo = {
   address: string;
@@ -15,6 +16,7 @@ type ProofInfo = {
 
 export default function ClaimPage() {
   const { address: connectedAddress } = useAccount();
+  const publicClient = usePublicClient();
   const [proof, setProof] = useState<string[]>([]);
   const [tokenId, setTokenId] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -80,10 +82,27 @@ export default function ClaimPage() {
       }
 
       setLoading(true);
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "claimAirdrop",
         args: [BigInt(tokenId), proof as `0x${string}`[]],
       });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'claimAirdrop',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       notification.success("NFT 领取成功！");
     } catch (error) {
       console.error("领取 NFT 错误:", error);

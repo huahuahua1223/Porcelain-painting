@@ -8,7 +8,8 @@ import { Address } from "~~/components/scaffold-eth";
 import { format } from "date-fns";
 import { formatEther, parseEther } from "viem";
 import { NFTMetaData } from "~~/utils/simpleNFT/nftsMetadata";
-import { getMetadataFromIPFS, collectNFT, reportNFT } from "~~/utils/simpleNFT/ipfs-fetch";
+import { getMetadataFromIPFS, collectNFT, reportNFT, saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
+import { usePublicClient } from "wagmi";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
@@ -16,6 +17,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const { tokenId } = params;
     const router = useRouter();
     const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
+    const publicClient = usePublicClient();
     const [nftMetadata, setNftMetadata] = useState<NFTMetaData | null>(null);
     const { address: connectedAddress } = useAccount();
     const [isListModalOpen, setIsListModalOpen] = useState(false);
@@ -57,10 +59,26 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         const formattedPrice = BigInt(price);
 
         try {
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "buyItem",
                 args: [BigInt(tokenId)],
                 value: formattedPrice,
+            });
+
+            // 等待交易被确认
+            const receipt = await publicClient?.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash as string,
+                method_name: 'buyItem',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
             });
 
             notification.success("NFT purchased successfully!");
@@ -76,10 +94,27 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const handleDelistItem = async () => {
         try {
             const notificationId = notification.loading("正在下架...");
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "delistItem",
                 args: [BigInt(tokenId)],
             });
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient?.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'delistItem',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.remove(notificationId);
             notification.success("下架成功！");
         } catch (error) {
@@ -120,48 +155,79 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
 
     // 添加上架处理函数
     const handleListNFT = async () => {
-        if (!listingPrice) {
-            notification.error("请输入上架价格");
+        if (!listingPrice || isNaN(Number(listingPrice)) || Number(listingPrice) <= 0) {
+            notification.error("请输入有效的价格");
             return;
         }
 
+        const priceWei = parseEther(listingPrice);
+        const listingFee = parseEther("0.025"); // 0.025 ETH 手续费
+
         try {
-            const notificationId = notification.loading("正在上架NFT...");
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "listItem",
-                args: [BigInt(tokenId), parseEther(listingPrice)],
-                value: parseEther("0.025"),
+                args: [BigInt(tokenId), priceWei],
+                value: listingFee,
             });
-            notification.remove(notificationId);
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient?.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'listItem',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.success("NFT上架成功！");
             setIsListModalOpen(false);
-            setListingPrice("");
         } catch (error) {
-            console.error("上架失败:", error);
-            notification.error("上架失败");
+            notification.error("上架失败！");
+            console.error(error);
         }
     };
 
     // 添加碎片化处理函数
     const handleFractionalize = async () => {
-        if (!fractionCount) {
-            notification.error("请输入碎片数量");
+        if (!fractionCount || isNaN(Number(fractionCount)) || Number(fractionCount) <= 0) {
+            notification.error("请输入有效的碎片数量");
             return;
         }
 
         try {
-            const notificationId = notification.loading("正在碎片化NFT...");
-            await writeContractAsync({
+            const tx = await writeContractAsync({
                 functionName: "fractionalizeNFT",
                 args: [BigInt(tokenId), BigInt(fractionCount)],
             });
-            notification.remove(notificationId);
+
+            // 等待交易被确认并获取回执
+            const receipt = await publicClient?.waitForTransactionReceipt({ 
+                hash: tx as `0x${string}` 
+            });
+
+            // 保存gas记录
+            await saveGasRecord({
+                tx_hash: receipt?.transactionHash,
+                method_name: 'fractionalizeNFT',
+                gas_used: receipt?.gasUsed,
+                gas_price: receipt?.effectiveGasPrice,
+                total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                user_address: connectedAddress as string,
+                block_number: receipt?.blockNumber
+            });
+
             notification.success("NFT碎片化成功！");
             setIsFractionalizeModalOpen(false);
-            setFractionCount("");
         } catch (error) {
-            console.error("碎片化失败:", error);
-            notification.error("碎片化失败");
+            notification.error("碎片化失败！");
+            console.error(error);
         }
     };
 

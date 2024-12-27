@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
 import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { generateMerkleTree } from "~~/utils/merkleTree";
 import { notification } from "~~/utils/scaffold-eth";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 type AirdropInfo = {
   address: string;
@@ -22,6 +23,7 @@ type AirdropEntry = {
 
 export default function AirdropPage() {
   const { address: connectedAddress } = useAccount();
+  const publicClient = usePublicClient();
   const [airdropEntries, setAirdropEntries] = useState<AirdropEntry[]>([{ address: "", tokenId: "", isValid: true }]);
   const [merkleRoot, setMerkleRoot] = useState<string>("");
   const [proofs, setProofs] = useState<Array<{ address: string; tokenId: number; proof: string[] }>>([]);
@@ -103,10 +105,27 @@ export default function AirdropPage() {
   const handleSetMerkleRoot = async () => {
     try {
       setLoading(true);
-        await writeContractAsync({
-            functionName: "setMerkleRoot",
-            args: [merkleRoot as `0x${string}`],
-          });
+      const tx = await writeContractAsync({
+        functionName: "setMerkleRoot",
+        args: [merkleRoot as `0x${string}`],
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'setMerkleRoot',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       notification.success("默克尔根设置成功！");
     } catch (error) {
       console.error("设置默克尔根错误:", error);

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useScaffoldWriteContract, useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
+import { useAccount, usePublicClient } from "wagmi";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 
 interface LoyaltyInfo {
   holdingStartTime: number;
@@ -17,6 +19,8 @@ interface LoyaltyRewardsProps {
 export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [waitTime, setWaitTime] = useState<number>(0);
+  const publicClient = usePublicClient();
+  const { address: connectedAddress } = useAccount();
 
   const { writeContractAsync } = useScaffoldWriteContract("YourCollectible");
 
@@ -69,10 +73,27 @@ export const LoyaltyRewards = ({ tokenId, onRewardClaimed }: LoyaltyRewardsProps
   const handleClaimReward = async () => {
     try {
       setIsLoading(true);
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "claimLoyaltyReward",
         args: [BigInt(tokenId)],
       });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient?.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'claimLoyaltyReward',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
       notification.success("奖励领取成功！");
       onRewardClaimed?.();
       // 领取成功后刷新数据

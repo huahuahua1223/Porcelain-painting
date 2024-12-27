@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { formatEther, parseEther } from "viem";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract, useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
-import { uploadFileToIPFS, addToIPFS } from "~~/utils/simpleNFT/ipfs-fetch";
+import { uploadFileToIPFS, addToIPFS, saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 import { useDropzone } from "react-dropzone";
 import { motion } from "framer-motion";
 
@@ -31,6 +31,7 @@ interface Attribute {
 
 const MysteryBoxPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
+  const publicClient = usePublicClient();
   const [price, setPrice] = useState("");
   const [royaltyFee, setRoyaltyFee] = useState(250); // 默认版税 2.5%
   const [nftFiles, setNftFiles] = useState<NFTFile[]>([]);
@@ -182,9 +183,25 @@ const MysteryBoxPage: NextPage = () => {
       const uris = await Promise.all(metadataPromises);
 
       // 调用合约创建盲盒
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "createMysteryBox",
         args: [parseEther(price), uris, BigInt(royaltyFee)],
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'createMysteryBox',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
       });
 
       notification.remove(notificationId);
@@ -210,11 +227,28 @@ const MysteryBoxPage: NextPage = () => {
     }
 
     try {
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "updateMysteryBoxPrice",
         args: [parseEther(newPrice)],
       });
-      notification.success("价格更新成功");
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'updateMysteryBoxPrice',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
+      notification.success("价格更新成功！");
       setNewPrice("");
       refetchBoxInfo();
     } catch (error) {
@@ -226,15 +260,32 @@ const MysteryBoxPage: NextPage = () => {
   // 更改盲盒状态
   const handleToggleStatus = async () => {
     try {
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "setMysteryBoxStatus",
         args: [!mysteryBoxInfo?.isActive],
       });
-      notification.success("状态更新成功");
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'setMysteryBoxStatus',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
+      notification.success(`盲盒已${mysteryBoxInfo?.isActive ? "停用" : "激活"}！`);
       refetchBoxInfo();
     } catch (error) {
-      console.error("更新状态失败:", error);
-      notification.error("更新状态失败");
+      console.error("切换状态失败:", error);
+      notification.error("切换状态失败");
     }
   };
 
@@ -259,7 +310,7 @@ const MysteryBoxPage: NextPage = () => {
       if (!uploadedFile?.IpfsHash) throw new Error("上传文件失败");
       notification.success("上传文件成功");
 
-      // 创建元数据
+      // 创建并上传元数据
       const metadata = {
         name: `Mystery NFT #${mysteryBoxInfo ? Number(mysteryBoxInfo.totalOptions) + 1 : 1}`,
         description: "A mysterious NFT from the mystery box",
@@ -273,12 +324,29 @@ const MysteryBoxPage: NextPage = () => {
       notification.success("上传元数据成功");
 
       // 添加新URI到盲盒
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "addURIToMysteryBox",
         args: [metadataUpload.IpfsHash],
       });
 
-      notification.success("添加新URI成功");
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'addURIToMysteryBox',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
+      });
+
+      notification.success("新NFT添加成功！");
+      setNewUri("");
       setNewUriFile(null);
       refetchBoxInfo();
     } catch (error) {

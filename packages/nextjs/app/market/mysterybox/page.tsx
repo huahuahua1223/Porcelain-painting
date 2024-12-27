@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { formatEther } from "viem";
 import { motion, AnimatePresence } from "framer-motion";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldContract, useScaffoldReadContract , useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
+import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
 interface MysteryBoxInfo {
   price: bigint;
   isActive: boolean;
@@ -15,6 +16,7 @@ interface MysteryBoxInfo {
 }
 const MysteryBoxMarket: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
+  const publicClient = usePublicClient();
   const [isLoading, setIsLoading] = useState(false);
   const [mysteryBoxInfo, setMysteryBoxInfo] = useState<MysteryBoxInfo | null>(null);
 
@@ -54,9 +56,25 @@ const MysteryBoxMarket: NextPage = () => {
     const notificationId = notification.loading("正在购买盲盒...");
 
     try {
-      await writeContractAsync({
+      const tx = await writeContractAsync({
         functionName: "purchaseMysteryBox",
         value: mysteryBoxInfo.price,
+      });
+
+      // 等待交易被确认并获取回执
+      const receipt = await publicClient.waitForTransactionReceipt({ 
+        hash: tx as `0x${string}` 
+      });
+
+      // 保存gas记录
+      await saveGasRecord({
+        tx_hash: receipt?.transactionHash,
+        method_name: 'purchaseMysteryBox',
+        gas_used: receipt?.gasUsed,
+        gas_price: receipt?.effectiveGasPrice,
+        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+        user_address: connectedAddress as string,
+        block_number: receipt?.blockNumber
       });
 
       notification.remove(notificationId);

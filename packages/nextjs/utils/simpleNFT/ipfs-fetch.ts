@@ -135,4 +135,76 @@ export const reportNFT = async (data: any) => {
     throw error;
   }
 };
+
+// 保存gas记录
+export const saveGasRecord = async (data: {
+  tx_hash: string;
+  method_name: string;
+  gas_used: bigint;
+  gas_price: bigint;
+  total_cost: bigint;
+  user_address: string;
+  block_number: bigint;
+  created_at?: string;
+  status?: string;
+}) => {
+  try {
+    // 格式化日期时间为MySQL可接受的格式 (UTC+8)
+    const date = new Date();
+    date.setHours(date.getHours() + 8);
+    const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
+
+    const response = await fetch('/api/gas/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data,
+        created_at: formattedDate,
+        // 将 bigint 转换为字符串
+        gas_used: data.gas_used.toString(),
+        gas_price: data.gas_price.toString(),
+        total_cost: data.total_cost.toString(),
+        block_number: data.block_number.toString()
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save gas record');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving gas record:', error);
+    throw error;
+  }
+};
+
+// 获取gas记录
+export const getGasRecords = async (params?: {
+  method_name?: string;
+  user_address?: string;
+}) => {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.method_name) {
+      searchParams.append('method_name', params.method_name);
+    }
+    if (params?.user_address) {
+      searchParams.append('user_address', params.user_address);
+    }
+
+    const response = await fetch(`/api/gas/save?${searchParams.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch gas records');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching gas records:', error);
+    throw error;
+  }
+};
   
