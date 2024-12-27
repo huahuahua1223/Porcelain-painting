@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     YourCollectible: {
-      address: "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
         {
           inputs: [],
@@ -1041,7 +1041,7 @@ const deployedContracts = {
             },
             {
               internalType: "uint256",
-              name: "totalOptions",
+              name: "totalURIs",
               type: "uint256",
             },
           ],
@@ -1049,13 +1049,19 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [],
-          name: "getMysteryBoxURIsCount",
-          outputs: [
+          inputs: [
             {
               internalType: "uint256",
-              name: "",
+              name: "index",
               type: "uint256",
+            },
+          ],
+          name: "getMysteryBoxURI",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
             },
           ],
           stateMutability: "view",
@@ -1327,6 +1333,30 @@ const deployedContracts = {
               internalType: "uint96",
               name: "royaltyFee",
               type: "uint96",
+            },
+            {
+              internalType: "uint256",
+              name: "uriCount",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "mysteryBoxURIs",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
             },
           ],
           stateMutability: "view",

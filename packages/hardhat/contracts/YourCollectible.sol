@@ -65,8 +65,8 @@ contract YourCollectible is
     struct MysteryBox {
         uint256 price;          // 盲盒价格
         bool isActive;          // 盲盒是否激活
-        string[] possibleURIs;  // 可能的 NFT URI 列表
         uint96 royaltyFee;      // 版税比例
+        uint256 uriCount;       // URI 总数
     }
 
     MysteryBox public mysteryBox;  // 盲盒信息
@@ -83,6 +83,9 @@ contract YourCollectible is
     mapping(uint256 => LoyaltyInfo) public nftLoyalty;  // tokenId => 忠诚度信息
     mapping(address => bool) public hasClaimed; // 记录地址是否已领取空投
     
+    // 添加新的映射来存储 URI
+    mapping(uint256 => string) public mysteryBoxURIs;  // index => URI
+
     // 事件
     event NftListed(
         uint256 indexed tokenId,
@@ -613,11 +616,16 @@ contract YourCollectible is
         require(_possibleURIs.length > 0, "Must provide URIs");
         require(_price > 0, "Price must be greater than 0");
         
+        // 存储每个 URI
+        for(uint256 i = 0; i < _possibleURIs.length; i++) {
+            mysteryBoxURIs[i] = _possibleURIs[i];
+        }
+        
         mysteryBox = MysteryBox({
             price: _price,
             isActive: true,
-            possibleURIs: _possibleURIs,
-            royaltyFee: _royaltyFee
+            royaltyFee: _royaltyFee,
+            uriCount: _possibleURIs.length
         });
 
         emit MysteryBoxCreated(_price, _possibleURIs.length);
@@ -637,12 +645,27 @@ contract YourCollectible is
 
     // 添加新的 URI 到盲盒
     function addURIToMysteryBox(string memory _uri) public onlyOwner {
-        mysteryBox.possibleURIs.push(_uri);
+        mysteryBoxURIs[mysteryBox.uriCount] = _uri;
+        mysteryBox.uriCount++;
     }
 
-    // 获取盲盒中可能的 URI 数量
-    function getMysteryBoxURIsCount() public view returns (uint256) {
-        return mysteryBox.possibleURIs.length;
+    // 获取指定索引的 URI
+    function getMysteryBoxURI(uint256 index) public view returns (string memory) {
+        require(index < mysteryBox.uriCount, "URI index out of bounds");
+        return mysteryBoxURIs[index];
+    }
+
+    // 获取盲盒信息
+    function getMysteryBoxInfo() public view returns (
+        uint256 price,
+        bool isActive,
+        uint256 totalURIs
+    ) {
+        return (
+            mysteryBox.price,
+            mysteryBox.isActive,
+            mysteryBox.uriCount
+        );
     }
 
     // 生成伪随机数
@@ -660,11 +683,11 @@ contract YourCollectible is
     function purchaseMysteryBox() public payable nonReentrant {
         require(mysteryBox.isActive, "Mystery box is not active");
         require(msg.value == mysteryBox.price, "Incorrect payment amount");
-        require(mysteryBox.possibleURIs.length > 0, "No NFTs available in mystery box");
+        require(mysteryBox.uriCount > 0, "No NFTs available in mystery box");
 
         // 生成随机索引
-        uint256 randomIndex = _random() % mysteryBox.possibleURIs.length;
-        string memory selectedURI = mysteryBox.possibleURIs[randomIndex];
+        uint256 randomIndex = _random() % mysteryBox.uriCount;
+        string memory selectedURI = mysteryBoxURIs[randomIndex];
 
         // 铸造 NFT
         uint256 newTokenId = mintItem(msg.sender, selectedURI, mysteryBox.royaltyFee);
@@ -678,30 +701,6 @@ contract YourCollectible is
 
         emit MysteryBoxPurchased(msg.sender, newTokenId, selectedURI);
     }
-
-    // 获取盲盒信息
-    function getMysteryBoxInfo() public view returns (
-        uint256 price,
-        bool isActive,
-        uint256 totalOptions
-    ) {
-        return (
-            mysteryBox.price,
-            mysteryBox.isActive,
-            mysteryBox.possibleURIs.length
-        );
-    }
-
-    // 获取盲盒中所有可能的 URI
-    // function getMysteryBoxURIs() public view returns (string[] memory) {
-    //     require(mysteryBox.possibleURIs.length > 0, "No URIs in mystery box");
-    //     return mysteryBox.possibleURIs;
-    // }
-
-    // 获取盲盒完整信息
-    // function getMysteryBox() public view returns (MysteryBox memory) {
-    //     return mysteryBox;
-    // }
 
     // 设置默克尔树根（仅管理员可调用）
     function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
