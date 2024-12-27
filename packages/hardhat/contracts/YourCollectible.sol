@@ -110,8 +110,6 @@ contract YourCollectible is
     event AirdropClaimed(address indexed claimer, uint256 tokenId);
     event MerkleRootSet(bytes32 merkleRoot);
 
-	
-
 	constructor() payable ERC721("YourCollectible", "YCB") {
 		
 	}
@@ -398,6 +396,9 @@ contract YourCollectible is
         require(sellerFraction.isForSale, "Fraction is not for sale");
         require(sellerFraction.amount >= amount, "Insufficient fractions for sale");
         require(msg.value == sellerFraction.price * amount, "Incorrect payment amount");
+
+        // 保存当前价格用于事件发送
+        uint256 pricePerFraction = sellerFraction.price;
     
         // 更新碎片持有量
         sellerFraction.amount -= amount;
@@ -417,7 +418,7 @@ contract YourCollectible is
         (bool success, ) = payable(seller).call{value: msg.value}("");
         require(success, "Transfer to seller failed");
     
-        emit FractionBought(tokenId, msg.sender, seller, amount, sellerFraction.price);
+        emit FractionBought(tokenId, msg.sender, seller, amount, pricePerFraction);
     }
 
     // 转赠NFT碎片

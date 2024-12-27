@@ -26,11 +26,6 @@ type HeaderMenuLink = {
 };
 
 export const menuLinks: HeaderMenuLink[] = [
-  // {
-  //   label: "My NFTs",
-  //   href: "/myNFTs",
-  //   icon: <PhotoIcon className="h-4 w-4" />,
-  // },
   {
     label: "铸造NFT",
     href: "/create",
@@ -48,7 +43,6 @@ export const menuLinks: HeaderMenuLink[] = [
       { label: "碎片化市场", href: "/fractionalize" },
       { label: "盲盒市场", href: "/market/mysterybox" },
       { label: "3d 模型", href: "/models" },
-      // { label: "最新上架", href: "/market/new" },
     ],
   },
   {
@@ -57,33 +51,9 @@ export const menuLinks: HeaderMenuLink[] = [
     icon: <PhotoIcon className="h-4 w-4" />,
   },
   {
-    label: "买卖记录",
+    label: "交易记录",
     href: "/transfers",
     icon: <ClipboardIcon className="h-4 w-4" />,
-  },
-  // {
-  //   label: "IPFS 上传",
-  //   href: "/ipfsUpload",
-  //   icon: <ArrowUpTrayIcon className="h-4 w-4" />,
-  // },
-  // {
-  //   label: "IPFS 下载",
-  //   href: "/ipfsDownload",
-  //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
-  // },
-  // {
-  //   label: "碎片化",
-  //   href: "/fractionalize",
-  //   icon: <ArrowDownTrayIcon className="h-4 w-4" />,
-  // },
-  {
-    label: "调试合约",
-    href: "/debug",
-    icon: <BugAntIcon className="h-4 w-4" />,
-    // subMenu: [
-    //   { label: "基础调试", href: "/debug/basic" },
-    //   { label: "高级调试", href: "/debug/advanced" },
-    // ],
   },
   {
     label: "空投管理",
@@ -93,6 +63,12 @@ export const menuLinks: HeaderMenuLink[] = [
       { label: "领取空投", href: "/claim" },
     ],
   },
+  {
+    label: "调试合约",
+    href: "/debug",
+    icon: <BugAntIcon className="h-4 w-4" />,
+  },
+  
 ];
 
 export const HeaderMenuLinks = () => {
