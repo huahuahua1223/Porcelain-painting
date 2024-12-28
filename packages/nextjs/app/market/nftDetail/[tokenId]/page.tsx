@@ -12,6 +12,86 @@ import { getMetadataFromIPFS, collectNFT, reportNFT, saveGasRecord } from "~~/ut
 import { usePublicClient } from "wagmi";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Float, ContactShadows, useGLTF } from "@react-three/drei";
+
+// 创建3D模型组件
+function GLBModel({ modelUrl }: { modelUrl: string }) {
+  const { scene } = useGLTF(modelUrl);
+  return (
+    <group>
+      <primitive 
+        object={scene} 
+        scale={2} 
+        position={[0, -1, 0]} 
+        rotation={[0, 5, 0]}
+      />
+    </group>
+  );
+}
+
+// 创建3D查看器组件
+function ModelViewer({ modelUrl }: { modelUrl: string }) {
+  return (
+    <Canvas
+      camera={{ 
+        position: [0, 0, 5],
+        fov: 50,
+        near: 0.1,
+        far: 1000
+      }}
+      style={{ width: "100%", height: "500px" }}
+    >
+      <OrbitControls
+        enablePan={true} // 允许平移
+        enableZoom={true} // 允许缩放
+        enableRotate={true} // 允许旋转
+        minDistance={2} // 最小缩放距离
+        maxDistance={10} // 最大缩放距离
+        autoRotate={false} // 禁用自动旋转
+        makeDefault
+      />
+      <Float
+        rotationIntensity={0.2}
+        floatIntensity={0.2}
+        speed={1}
+      >
+        <GLBModel modelUrl={modelUrl} />
+      </Float>
+
+      <ContactShadows
+        opacity={0.4}
+        scale={10}
+        blur={2}
+        far={4}
+        resolution={256}
+        color="#000000"
+        position={[0, -2, 0]}
+      />
+
+      {/* 环境光照 */}
+      <ambientLight intensity={1.5} />
+      
+      {/* 主光源 - 调整以更好地照亮正面 */}
+      <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
+      <directionalLight position={[-5, 5, -5]} intensity={0.8} castShadow />
+      <directionalLight position={[0, 5, 0]} intensity={1} castShadow /> // 添加顶部光源
+      
+      {/* 补光 - 调整以提供更好的环境光照 */}
+      <pointLight position={[5, 0, 5]} intensity={0.4} color="#ffd93d" />
+      <pointLight position={[-5, 0, -5]} intensity={0.4} color="#ffd93d" />
+      <pointLight position={[0, 0, 5]} intensity={0.4} color="#ff6b6b" />
+      <pointLight position={[0, 0, -5]} intensity={0.4} color="#ff6b6b" />
+
+      {/* 环境氛围光 */}
+      <hemisphereLight
+        intensity={0.5}
+        color="#ffffff"
+        groundColor="#666666"
+      />
+    </Canvas>
+  );
+}
 
 const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const { tokenId } = params;
@@ -27,6 +107,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
     const [isCollected, setIsCollected] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [fileType, setFileType] = useState<string | null>(null);
 
     // 根据tokenId获取NFT合约存储的数据：tokenId, price, owner, isListed, tokenUri
     const { data: nftData, isLoading, error } = useScaffoldReadContract({
@@ -52,6 +133,22 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
             });
         }
     }, [nftData]);
+
+    // 检查文件类型
+    useEffect(() => {
+        const fetchFileType = async () => {
+            if (nftMetadata?.image) {
+                try {
+                    const response = await fetch(nftMetadata.image, { method: "HEAD" });
+                    const contentType = response.headers.get("Content-Type");
+                    setFileType(contentType);
+                } catch (error) {
+                    console.error("无法获取文件类型", error);
+                }
+            }
+        };
+        fetchFileType();
+    }, [nftMetadata?.image]);
 
     // 购买NFT函数
     const handleBuyNFT = async (tokenId: number, price: number) => {
@@ -99,7 +196,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                 args: [BigInt(tokenId)],
             });
 
-            // 等待交易被确认并获取回执
+            // 等待交易被确认获取回执
             const receipt = await publicClient?.waitForTransactionReceipt({ 
                 hash: tx as `0x${string}` 
             });
@@ -134,7 +231,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
         watch: true, // 轮询
     });
 
-    // 添加动画体
+    // 添加画体
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -341,18 +438,24 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                                     }}
                                 />
                                 <motion.div
-                                    className="relative rounded-2xl overflow-hidden aspect-square"
+                                    className="relative rounded-2xl overflow-hidden"
                                     whileHover={{ scale: 1.02 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    {nftMetadata ? (
-                                        <img
-                                            src={nftMetadata.image}
-                                            alt={nftMetadata.name}
-                                            className="w-full h-full object-cover"
-                                        />
+                                    {fileType && fileType.includes("model/gltf-binary") ? (
+                                        // 3D模型展示
+                                        <div className="aspect-square">
+                                            <ModelViewer modelUrl={nftMetadata?.image || ""} />
+                                        </div>
                                     ) : (
-                                        <div className="w-full h-full bg-base-200 animate-pulse" />
+                                        // 普通图片展示
+                                        <div className="aspect-square">
+                                            <img
+                                                src={nftMetadata?.image}
+                                                alt={nftMetadata?.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
                                     )}
                                 </motion.div>
                             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
@@ -10,7 +10,89 @@ import { uploadFileToIPFS, addToIPFS, saveNFTToDB, saveGasRecord } from "~~/util
 // import { MyHoldings } from "./_components";
 import { usePublicClient } from "wagmi";
 import { motion } from "framer-motion";
+import { Canvas } from "@react-three/fiber";
+import { PresentationControls, Float, ContactShadows, useGLTF } from "@react-three/drei";
 
+  // 创建3D模型组件
+  function GLBModel({ modelUrl }: { modelUrl: string }) {
+    const { scene } = useGLTF(modelUrl);
+    return (
+      <group>
+        <primitive object={scene} scale={2} position={[0, 0.3, 0]} />
+      </group>
+    );
+  }
+  
+  // 创建3D查看器组件
+  function ModelViewer({ modelUrl }: { modelUrl: string }) {
+    // 确保modelUrl是有效的URL
+    if (!modelUrl) return null;
+
+    return (
+      <Canvas
+        camera={{ position: [0, 2, 5], fov: 45 }}
+        style={{ width: "100%", height: "400px" }}
+      >
+        <PresentationControls
+          global
+          rotation={[0.13, 0.1, 0]}
+          polar={[-Math.PI / 2, Math.PI / 2]}
+          azimuth={[-Infinity, Infinity]}
+          config={{ mass: 2, tension: 400 }}
+          snap={{ mass: 4, tension: 400 }}
+        >
+          <Float
+            rotationIntensity={0.2}
+            floatIntensity={0.5}
+            speed={2}
+          >
+            <GLBModel modelUrl={modelUrl} />
+          </Float>
+        </PresentationControls>
+  
+        <ContactShadows
+          opacity={0.3}
+          scale={8}
+          blur={2}
+          far={4}
+          resolution={256}
+          color="#000000"
+          position={[0, -1, 0]}
+        />
+  
+        {/* 环境光照 */}
+        <ambientLight intensity={1.2} />
+        
+        {/* 主光源 */}
+        <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
+        <directionalLight position={[-5, 5, -5]} intensity={1} castShadow />
+        <directionalLight position={[5, 5, -5]} intensity={1} castShadow />
+        <directionalLight position={[-5, 5, 5]} intensity={1} castShadow />
+  
+        {/* 补光 */}
+        <pointLight position={[5, 0, 0]} intensity={0.5} color="#ff6b6b" />
+        <pointLight position={[-5, 0, 0]} intensity={0.5} color="#ff6b6b" />
+        <pointLight position={[0, 0, 5]} intensity={0.5} color="#ffd93d" />
+        <pointLight position={[0, 0, -5]} intensity={0.5} color="#ffd93d" />
+  
+        {/* 顶部和底部光源 */}
+        <spotLight
+          position={[0, 8, 0]}
+          intensity={0.8}
+          angle={Math.PI / 2}
+          penumbra={1}
+          color="#ffffff"
+        />
+        <spotLight
+          position={[0, -8, 0]}
+          intensity={0.4}
+          angle={Math.PI / 2}
+          penumbra={1}
+          color="#ffffff"
+        />
+      </Canvas>
+    );
+  }
 const CreateNFTPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
   const [name, setName] = useState("");
@@ -26,6 +108,8 @@ const CreateNFTPage: NextPage = () => {
   const [batchPreviews, setBatchPreviews] = useState<string[]>([]); // 存储批量预览图片
   const [isBatchMode, setIsBatchMode] = useState(false); // 控制是否为批量模式
   const [batchImageCIDs, setBatchImageCIDs] = useState<string[]>([]); // 存储批量上传的图片CID
+  const [fileType, setFileType] = useState<string | null>(null);
+  const [batchFileTypes, setBatchFileTypes] = useState<(string | null)[]>([]);
 
   // 添加装饰性配置
   const floatingIcons = [
@@ -48,7 +132,11 @@ const CreateNFTPage: NextPage = () => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    const notificationId = notification.loading("Uploading image to IPFS...");
+    // 检查文件类型
+    const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+    setFileType(fileExtension || null);
+
+    const notificationId = notification.loading("Uploading to IPFS...");
 
     try {
       const uploadedFile = await uploadFileToIPFS(selectedFile);
@@ -56,15 +144,22 @@ const CreateNFTPage: NextPage = () => {
 
       if (uploadedFile && uploadedFile.IpfsHash) {
         console.log("IpfsHash==========>", uploadedFile.IpfsHash);
-        setImageCID(uploadedFile.IpfsHash); // 将 IPFS CID 设置到状态
-        notification.success("Image uploaded to IPFS successfully!");
-        setImagePreview(URL.createObjectURL(selectedFile));
+        setImageCID(uploadedFile.IpfsHash);
+        notification.success("File uploaded to IPFS successfully!");
+        
+        // 如果是GLB文件，需要特殊处理预览URL
+        if (fileExtension === 'glb') {
+          // 使用完整的IPFS URL
+          setImagePreview(`https://aqua-famous-koala-370.mypinata.cloud/ipfs/${uploadedFile.IpfsHash}`);
+        } else {
+          setImagePreview(URL.createObjectURL(selectedFile));
+        }
       } else {
-        notification.error("Failed to upload image to IPFS.");
+        notification.error("Failed to upload to IPFS.");
       }
     } catch (error) {
       notification.remove(notificationId);
-      notification.error("Failed to upload image.");
+      notification.error("Upload failed.");
       console.error(error);
     }
   };
@@ -168,7 +263,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
-  // 处理批量文件上传 - 立即上传到 IPFS
+  // 处理批量文件上传
   const handleBatchFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -179,34 +274,47 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     setBatchFiles(files);
     
-    // 生成预览
-    const previews = files.map(file => URL.createObjectURL(file));
-    setBatchPreviews(previews);
+    // 生成预览和存储文件类型
+    const fileInfos = files.map(file => ({
+      preview: URL.createObjectURL(file),
+      type: file.name.split('.').pop()?.toLowerCase() || null
+    }));
+    setBatchPreviews(fileInfos.map(info => info.preview));
+    
+    // 存储每个文件的类型
+    const fileTypes = fileInfos.map(info => info.type);
+    setBatchFileTypes(fileTypes);
 
-    // 立即上传图片到 IPFS
-    const notificationId = notification.loading("Uploading images to IPFS...");
+    // 立即上传到 IPFS
+    const notificationId = notification.loading("Uploading files to IPFS...");
     try {
       const cids: string[] = [];
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const uploadedFile = await uploadFileToIPFS(file);
         if (uploadedFile && uploadedFile.IpfsHash) {
-          cids.push(uploadedFile.IpfsHash);
+          const ipfsHash = uploadedFile.IpfsHash;
+          // 对于GLB文件，使用完整的IPFS URL
+          const fileUrl = fileTypes[i] === 'glb' 
+            ? `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${ipfsHash}`
+            : ipfsHash;
+          cids.push(fileUrl);
         }
       }
       setBatchImageCIDs(cids);
       notification.remove(notificationId);
-      notification.success(`Successfully uploaded ${cids.length} images to IPFS`);
+      notification.success(`Successfully uploaded ${cids.length} files to IPFS`);
     } catch (error) {
       notification.remove(notificationId);
-      notification.error("Failed to upload images to IPFS");
+      notification.error("Failed to upload files to IPFS");
       console.error(error);
     }
   };
 
-  // 批量铸造NFT - 只处理元数据上传和合约调用
+  // 批量铸造NFT
   const handleBatchMint = async () => {
     if (batchImageCIDs.length === 0) {
-      notification.error("Please upload images first");
+      notification.error("Please upload files first");
       return;
     }
 
@@ -215,13 +323,18 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const uris: string[] = [];
       
-      // 为每个图片创建并上传元数据到IPFS
+      // 为每个文件创建并上传元数据到IPFS
       for (let i = 0; i < batchImageCIDs.length; i++) {
+        const imageUrl = batchFileTypes[i] === 'glb' 
+          ? batchImageCIDs[i]  // GLB文件已经是完整URL
+          : `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${batchImageCIDs[i]}`; // 其他文件需要构建完整URL
+
         const metadata = {
           name: `${name} #${i + 1}`,
           description,
-          image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${batchImageCIDs[i]}`,
+          image: imageUrl,
           attributes,
+          animation_url: batchFileTypes[i] === 'glb' ? imageUrl : undefined // 对于GLB文件，添加animation_url
         };
 
         // 上传metadata到IPFS
@@ -244,15 +357,17 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       });
 
       // 保存gas记录
-      await saveGasRecord({
-        tx_hash: receipt?.transactionHash,
-        method_name: 'batchMintItems',
-        gas_used: receipt?.gasUsed,
-        gas_price: receipt?.effectiveGasPrice,
-        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
-        user_address: connectedAddress as string,
-        block_number: receipt?.blockNumber
-      });
+      if (receipt) {
+        await saveGasRecord({
+          tx_hash: receipt.transactionHash,
+          method_name: 'batchMintItems',
+          gas_used: receipt.gasUsed,
+          gas_price: receipt.effectiveGasPrice,
+          total_cost: receipt.gasUsed * receipt.effectiveGasPrice,
+          user_address: connectedAddress as string,
+          block_number: receipt.blockNumber
+        });
+      }
       
       // 保存到数据库
       if (receipt) {
@@ -262,11 +377,15 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
         // 处理每个铸造的NFT
         for (let i = 0; i < uris.length; i++) {
+          const tokenId = receipt.logs[i].topics[3] 
+            ? parseInt(receipt.logs[i].topics[3] as string, 16) 
+            : i + 1;
+
           const data = {
-            nft_id: receipt.logs[i].topics[3] ? parseInt(receipt.logs[i].topics[3] as string, 16) : i + 1,
+            nft_id: tokenId,
             token_uri: uris[i],
             mint_item: mint_item_str,
-            owner: connectedAddress,
+            owner: connectedAddress as string,
             state: 0,
             royaltyFeeNumerator: royaltyFee,
           };
@@ -280,6 +399,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setBatchFiles([]);
       setBatchPreviews([]);
       setBatchImageCIDs([]);
+      setBatchFileTypes([]);
       setIsBatchMode(false);
     } catch (error) {
       notification.error("Failed to batch mint NFTs");
@@ -492,7 +612,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       </p>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      支持 PNG, JPG, GIF 等格式
+                    支持 PNG, JPG, GIF, GLB 等格式
                     </p>
                   </label>
                   <input
@@ -500,7 +620,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     id={isBatchMode ? "batch-file-upload" : "file-upload"}
                     onChange={isBatchMode ? handleBatchFileChange : handleFileChange}
                     className="hidden"
-                    accept="image/*"
+                    accept="image/*,.glb"
                     multiple={isBatchMode}
                   />
                 </div>
@@ -630,11 +750,27 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 {batchPreviews.length > 0 ? (
                   batchPreviews.slice(0, 3).map((preview, index) => (
                     <div key={index} className="border rounded-xl p-4 shadow-inner bg-base-200">
-                      <img 
-                        src={preview} 
-                        alt={`NFT Preview ${index + 1}`} 
-                        className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
-                      />
+                      {batchFileTypes[index] === 'glb' ? (
+                        // 3D模型预览
+                        <div className="w-full aspect-square bg-base-300 rounded-lg overflow-hidden">
+                          <Suspense fallback={
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="loading loading-spinner loading-lg"></span>
+                            </div>
+                          }>
+                            {batchImageCIDs[index] && (
+                              <ModelViewer modelUrl={batchImageCIDs[index]} />
+                            )}
+                          </Suspense>
+                        </div>
+                      ) : (
+                        // 普通图片预览
+                        <img 
+                          src={preview} 
+                          alt={`NFT Preview ${index + 1}`} 
+                          className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
+                        />
+                      )}
                       <div className="space-y-3">
                         <p className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                           {name ? `${name} #${index + 1}` : "等待输入名称..."}
@@ -661,7 +797,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   ))
                 ) : (
                   <div className="text-center text-gray-500">
-                    请选择图片进行预览
+                    请选择文件进行预览
                   </div>
                 )}
                 {batchPreviews.length > 3 && (
@@ -671,14 +807,28 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 )}
               </div>
             ) : (
-              // 单个模式预览 (保持原有的预览代码)
+              // 单个模式预览
               <div className="border rounded-xl p-4 shadow-inner bg-base-200">
                 {imagePreview ? (
-                  <img 
-                    src={imagePreview} 
-                    alt="NFT Preview" 
-                    className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
-                  />
+                  fileType === 'glb' ? (
+                    // 3D模型预览
+                    <div className="w-full aspect-square bg-base-300 rounded-lg overflow-hidden">
+                      <Suspense fallback={
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="loading loading-spinner loading-lg"></span>
+                        </div>
+                      }>
+                        <ModelViewer modelUrl={imagePreview} />
+                      </Suspense>
+                    </div>
+                  ) : (
+                    // 普通图片预览
+                    <img 
+                      src={imagePreview} 
+                      alt="NFT Preview" 
+                      className="w-full h-auto mb-4 rounded-lg shadow-md transition-transform hover:scale-105" 
+                    />
+                  )
                 ) : (
                   <div className="w-full h-48 bg-base-300 rounded-lg flex items-center justify-center text-gray-500 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">

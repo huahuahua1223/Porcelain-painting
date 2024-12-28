@@ -202,6 +202,22 @@ const Home: NextPage = () => {
           </motion.div>
         </motion.div>
 
+        {/* 3D 展示区域 */}
+        <motion.div
+          variants={itemVariants}
+          className="relative w-full max-w-4xl mx-auto mb-16"
+        >
+          <div className="relative rounded-3xl overflow-hidden border-4 border-base-300/50 shadow-2xl">
+            <iframe 
+              width="100%" 
+              height="480" 
+              src="https://www.51jianmo.com/newModel/?code=M000000000010018B6FDK&desc=0&icon=1&type=1&quick=1&opacity=1&full=1&isxcx=0" 
+              allowFullScreen
+              className="w-full"
+            />
+          </div>
+        </motion.div>
+
         {/* 特色功能区域增强 */}
         <motion.div variants={itemVariants} className="mb-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

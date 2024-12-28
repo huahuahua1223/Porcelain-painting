@@ -7,8 +7,86 @@ import { parseEther, formatEther } from "viem";
 import { useRouter } from "next/navigation";
 import { useAccount, usePublicClient } from "wagmi";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei"; // 用于加载和展示 .glb 文件
+import { OrbitControls, Float, ContactShadows, useGLTF } from "@react-three/drei";
 import { saveGasRecord } from "~~/utils/simpleNFT/ipfs-fetch";
+
+// 创建3D模型组件
+function GLBModel({ modelUrl }: { modelUrl: string }) {
+  const { scene } = useGLTF(modelUrl);
+  return (
+    <group>
+      <primitive 
+        object={scene} 
+        scale={2} 
+        position={[0, -1, 0]} 
+        rotation={[0, 5, 0]}
+      />
+    </group>
+  );
+}
+
+// 创建3D查看器组件
+function ModelViewer({ modelUrl }: { modelUrl: string }) {
+  return (
+    <Canvas
+      camera={{ 
+        position: [0, 0, 5],
+        fov: 50,
+        near: 0.1,
+        far: 1000
+      }}
+      style={{ width: "100%", height: "300px" }}
+    >
+      <OrbitControls
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        minDistance={2}
+        maxDistance={10}
+        autoRotate={false}
+        makeDefault
+      />
+      <Float
+        rotationIntensity={0.2}
+        floatIntensity={0.2}
+        speed={1}
+      >
+        <GLBModel modelUrl={modelUrl} />
+      </Float>
+
+      <ContactShadows
+        opacity={0.4}
+        scale={10}
+        blur={2}
+        far={4}
+        resolution={256}
+        color="#000000"
+        position={[0, -2, 0]}
+      />
+
+      {/* 环境光照 */}
+      <ambientLight intensity={1.5} />
+      
+      {/* 主光源 */}
+      <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
+      <directionalLight position={[-5, 5, -5]} intensity={0.8} castShadow />
+      <directionalLight position={[0, 5, 0]} intensity={1} castShadow />
+      
+      {/* 补光 */}
+      <pointLight position={[5, 0, 5]} intensity={0.4} color="#ffd93d" />
+      <pointLight position={[-5, 0, -5]} intensity={0.4} color="#ffd93d" />
+      <pointLight position={[0, 0, 5]} intensity={0.4} color="#ff6b6b" />
+      <pointLight position={[0, 0, -5]} intensity={0.4} color="#ff6b6b" />
+
+      {/* 环境氛围光 */}
+      <hemisphereLight
+        intensity={0.5}
+        color="#ffffff"
+        groundColor="#666666"
+      />
+    </Canvas>
+  );
+}
 
 export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: () => void }) => {
   const { address: connectedAddress } = useAccount();
@@ -303,16 +381,10 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
       {/* NFT 图片/模型显示 */}
       <div className="relative">
-        <div className={`nft-image-container ${fileType && fileType.includes("model/gltf-binary") ? "canvas" : ""}`}>
+        <div className={`nft-image-container ${fileType && fileType.includes("model/gltf-binary") ? "h-[300px]" : ""}`}>
           {fileType && fileType.includes("model/gltf-binary") ? (
-            // 渲染 3D 模型
-            <Canvas style={{ width: "100%", height: "100%" }}>
-              <ambientLight intensity={1.5} />
-              <spotLight position={[10, 10, 10]} angle={0.15} intensity={1.5} />
-              <spotLight position={[-10, 10, 10]} angle={0.15} intensity={1.5} />
-              <GLBModel modelUrl={nft.image} />
-              <OrbitControls />
-            </Canvas>
+            // 使用新的3D查看器组件
+            <ModelViewer modelUrl={nft.image} />
           ) : nft.image ? (
             // 普通图片
             <img
@@ -591,9 +663,4 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
 
   );
-};
-
-const GLBModel = ({ modelUrl }: { modelUrl: string }) => {
-  const gltf = useGLTF(modelUrl);
-  return <primitive object={gltf.scene} />;
 };
