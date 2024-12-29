@@ -405,130 +405,136 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
       {/* 卡片内容 */}
       <div className="card-body space-y-3">
         {/* NFT 基本信息 */}
-        <div className="flex items-center justify-center">
-          <p className="text-xl p-0 m-0 font-semibold">{nft.name}</p>
-          <div className="flex flex-wrap space-x-2 mt-1">
-            {nft.attributes?.map((attr, index) => (
-              <span key={index} className="badge badge-primary py-3">
-                {attr.value}
-              </span>
-            ))}
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xl p-0 m-0 font-semibold">{nft.name}</p>
+            <div className="flex flex-wrap gap-2">
+              {nft.attributes?.map((attr, index) => (
+                <span key={index} className="badge badge-primary py-3">
+                  {attr.value}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col justify-center mt-1">
-          <p className="my-0 text-lg">{nft.description}</p>
-        </div>
-        <div className="flex space-x-3 mt-1 items-center">
-          <span className="text-lg font-semibold">Owner : </span>
-          <Address address={nft.owner as `0x${string}`} />
+          <p className="my-0 text-base text-gray-600">{nft.description}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Owner:</span>
+            <Address address={nft.owner as `0x${string}`} />
+          </div>
         </div>
 
         {/* 如果不是租赁来的 NFT，显示所有操作按钮 */}
         {!nft.isRentedByMe && (
-          <div className="">
-            {/* 转移功能 */}
-            <div className="flex flex-col my-2 space-y-1">
-              <span className="text-lg font-semibold mb-1">Transfer To: </span>
-              <AddressInput
-                value={transferToAddress}
-                placeholder="receiver address"
-                onChange={newValue => setTransferToAddress(newValue)}
-              />
-            </div>
-            <div className="card-actions justify-end">
+          <div className="space-y-4">
+            {/* 主要操作按钮组 */}
+            <div className="grid grid-cols-2 gap-2">
               <button
-                className="btn btn-secondary btn-md px-8 tracking-wide"
-                onClick={async () => {
-                  try {
-                    const tx = await writeContractAsync({
-                      functionName: "transferFrom",
-                      args: [nft.owner as `0x${string}`, transferToAddress as `0x${string}`, BigInt(nft.id.toString())],
-                    });
-
-                    // 等待交易被确认并获取回执
-                    const receipt = await publicClient.waitForTransactionReceipt({ 
-                      hash: tx as `0x${string}` 
-                    });
-
-                    // 保存gas记录
-                    await saveGasRecord({
-                      tx_hash: receipt?.transactionHash,
-                      method_name: 'transferFrom',
-                      gas_used: receipt?.gasUsed,
-                      gas_price: receipt?.effectiveGasPrice,
-                      total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
-                      user_address: connectedAddress as string,
-                      block_number: receipt?.blockNumber
-                    });
-
-                    notification.success("NFT transferred successfully!");
-                  } catch (err) {
-                    console.error("Error calling transferFrom function");
-                    notification.error("Transfer failed");
-                  }
-                }}
+                className="btn btn-primary btn-sm w-full"
+                onClick={() => handleViewNFTDetails(nft.id)}
               >
-                Send
+                查看详情
               </button>
-            </div>
-
-            {/* 上架/下架功能 */}
-            {!isListed && !nft.isRentedByMe && (
-              <div className="flex items-center my-2 space-x-3">
+              
+              {!isListed && !nft.isRentedByMe ? (
                 <button
-                  className="btn btn-primary btn-sm px-4 py-1"
+                  className="btn btn-secondary btn-sm w-full"
                   onClick={() => setIsListModalOpen(true)}
                 >
                   上架出售
                 </button>
+              ) : (
+                <button
+                  className="btn btn-secondary btn-sm w-full opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  上架出售
+                </button>
+              )}
+
+              <button
+                className="btn btn-accent btn-sm w-full"
+                onClick={() => setIsFractionalizeModalOpen(true)}
+              >
+                碎片化
+              </button>
+
+              {nft.owner.toLowerCase() === connectedAddress?.toLowerCase() &&
+              (!nft.isRented || (nft.rentExpiry && Math.floor(Date.now() / 1000) > nft.rentExpiry)) ? (
+                <button
+                  className="btn btn-info btn-sm w-full"
+                  onClick={() => setIsRentalModalOpen(true)}
+                >
+                  设置租赁
+                </button>
+              ) : (
+                <button
+                  className="btn btn-info btn-sm w-full opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  设置租赁
+                </button>
+              )}
+            </div>
+
+            {/* 转移功能 */}
+            <div className="card bg-base-200 p-4 rounded-xl">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium">Transfer To:</span>
+                <div className="flex gap-2">
+                  <AddressInput
+                    value={transferToAddress}
+                    placeholder="receiver address"
+                    onChange={newValue => setTransferToAddress(newValue)}
+                  />
+                  <button
+                    className="btn btn-primary btn-sm whitespace-nowrap"
+                    onClick={async () => {
+                      try {
+                        const tx = await writeContractAsync({
+                          functionName: "transferFrom",
+                          args: [nft.owner as `0x${string}`, transferToAddress as `0x${string}`, BigInt(nft.id.toString())],
+                        });
+
+                        const receipt = await publicClient.waitForTransactionReceipt({ 
+                          hash: tx as `0x${string}` 
+                        });
+
+                        await saveGasRecord({
+                          tx_hash: receipt?.transactionHash,
+                          method_name: 'transferFrom',
+                          gas_used: receipt?.gasUsed,
+                          gas_price: receipt?.effectiveGasPrice,
+                          total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+                          user_address: connectedAddress as string,
+                          block_number: receipt?.blockNumber
+                        });
+
+                        notification.success("NFT transferred successfully!");
+                      } catch (err) {
+                        console.error("Error calling transferFrom function");
+                        notification.error("Transfer failed");
+                      }
+                    }}
+                  >
+                    发送
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
 
             {/* 二手交易提醒 */}
             {isSecondHand && royaltyAmount !== "0" && (
-              <div className="alert alert-warning my-2">
-                <span>注意: 这是二手交易，一笔版税费为 {formatEther(royaltyAmount)} ETH 将被扣除</span>
-              </div>
-            )}
-
-            {/* {isListed && (
-              <div className="flex items-center my-2 space-x-3">
-                <span className="text-lg font-semibold">Price(ETH):{price}</span>
-                <button
-                  className="btn btn-primary btn-sm px-4 py-1"
-                  onClick={handleUnlistNFT}
-                >
-                  下架
-                </button>
-              </div>
-            )} */}
-
-            {/* 碎片化功能 */}
-            {!nft.isRentedByMe && (
-              <div className="flex items-center my-2 space-x-3">
-                <button
-                  className="btn btn-primary btn-sm px-4 py-1"
-                  onClick={() => setIsFractionalizeModalOpen(true)}
-                >
-                  碎片化
-                </button>
-              </div>
-            )}
-
-            {/* 只有在 NFT 所有者查看时才显示租赁设置按钮 */}
-            {nft.owner.toLowerCase() === connectedAddress?.toLowerCase() &&
-              (!nft.isRented || (nft.rentExpiry && Math.floor(Date.now() / 1000) > nft.rentExpiry)) && (
-                <div className="flex items-center my-2 space-x-3">
-                  <button
-                    className="btn btn-primary btn-sm px-4 py-1"
-                    onClick={() => setIsRentalModalOpen(true)}
-                  >
-                    设置租赁
-                  </button>
+              <div className="alert alert-warning shadow-lg">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>二手交易版税费: {formatEther(royaltyAmount)} ETH</span>
                 </div>
-              )}
+              </div>
+            )}
 
-            {/* 添加上架弹窗 */}
+            {/* 保持现有的弹窗代码不变 */}
             <dialog className={`modal ${isListModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
                 <h3 className="font-bold text-lg mb-4">上架NFT</h3>
@@ -566,7 +572,6 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
               </form>
             </dialog>
 
-            {/* 添加碎片化弹窗 */}
             <dialog className={`modal ${isFractionalizeModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
                 <h3 className="font-bold text-lg mb-4">碎片化NFT</h3>
@@ -604,7 +609,6 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
               </form>
             </dialog>
 
-            {/* 租赁设置弹窗 */}
             <dialog className={`modal ${isRentalModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
                 <h3 className="font-bold text-lg mb-4">设置 NFT 租赁</h3>

@@ -18,7 +18,7 @@ import { PresentationControls, Float, ContactShadows, useGLTF } from "@react-thr
     const { scene } = useGLTF(modelUrl);
     return (
       <group>
-        <primitive object={scene} scale={2} position={[0, 0.3, 0]} />
+        <primitive object={scene} scale={2} position={[0, 0.3, 0]} rotation={[0, 5, 0]} />
       </group>
     );
   }
