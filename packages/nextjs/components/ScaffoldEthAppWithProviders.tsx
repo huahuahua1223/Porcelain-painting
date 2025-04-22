@@ -26,9 +26,16 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <div className="flex flex-col min-h-screen font-space-grotesk">
+      <div className="flex flex-col min-h-screen font-space-grotesk relative">
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{
+          backgroundImage: "url('/中国风-山水.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+          opacity: 0.25,
+        }}></div>
         <Header />
-        <main className="relative flex flex-col flex-1">{children}</main>
+        <main className="relative flex flex-col flex-1 z-10">{children}</main>
         <Footer />
       </div>
       <Toaster />

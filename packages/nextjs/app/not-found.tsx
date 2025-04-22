@@ -20,7 +20,7 @@ export default function NotFound() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div

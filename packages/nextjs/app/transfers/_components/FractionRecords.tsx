@@ -34,7 +34,7 @@ export const FractionRecords = ({ events }: FractionRecordsProps) => {
     const buyer = event.args.buyer ?? "N/A";
     const amount = event.args.amount?.toString() ?? "0";
     const pricePerFraction = formatEther(event.args.pricePerFraction ?? 0n);
-    const totalPrice = formatEther((event.args.amount ?? 0n) * (event.args.pricePerFraction ?? 0n));
+    const totalPrice = formatEther((BigInt(event.args.amount ?? 0) * BigInt(event.args.pricePerFraction ?? 0)));
     const blocktimestamp = event.block?.timestamp;
     const timestamp = blocktimestamp
       ? format(new Date(Number(blocktimestamp) * 1000), "yyyy-MM-dd HH:mm:ss")
@@ -70,9 +70,9 @@ export const FractionRecords = ({ events }: FractionRecordsProps) => {
 
   return {
     title: "碎片交易记录",
-    subtitle: "查看所有 NFT 碎片的交易历史",
-    gradientFrom: "secondary",
-    gradientTo: "accent",
+    subtitle: "查看所有 数藏 碎片的交易历史",
+    gradientFrom: "primary",
+    gradientTo: "secondary",
     events,
     statsData,
     tableHeaders: ["Token ID", "卖家", "买家", "购买数量", "单价 (ETH)", "总价 (ETH)", "交易时间", "操作"],

@@ -194,7 +194,7 @@ export default function AirdropPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -275,11 +275,11 @@ export default function AirdropPage() {
             <h1 className="text-6xl font-bold mb-4 relative">
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
                 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                NFT 空投管理
+                瓷艺空投管理
               </span>
             </h1>
             <p className="text-xl text-base-content/70">
-              轻松管理您的 NFT 空投计划
+              轻松管理您的瓷艺空投计划
             </p>
           </motion.div>
 
@@ -583,7 +583,7 @@ export default function AirdropPage() {
                 </motion.span>
               ))}
             </div>
-            <p className="text-sm">轻松管理您的 NFT 空投计划</p>
+            <p className="text-sm">轻松管理您的瓷艺空投计划</p>
           </motion.div>
 
           {/* 添加成功动画效果 */}

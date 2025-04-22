@@ -74,9 +74,9 @@ export const LeaseRecords = ({ events }: LeaseRecordsProps) => {
 
   return {
     title: "租赁记录",
-    subtitle: "查看所有 NFT 的租赁历史",
-    gradientFrom: "secondary",
-    gradientTo: "accent",
+    subtitle: "查看所有 数藏 的租赁历史",
+    gradientFrom: "primary",
+    gradientTo: "secondary",
     events,
     statsData,
     tableHeaders: ["Token ID", "租赁者地址", "到期时间", "操作时间", "操作"],

@@ -68,7 +68,7 @@ export const TradeRecords = ({ events }: TradeRecordsProps) => {
 
   return {
     title: "交易记录",
-    subtitle: "查看所有 NFT 的交易历史",
+    subtitle: "查看所有 数藏 的交易历史",
     gradientFrom: "primary",
     gradientTo: "secondary",
     events,

@@ -7,11 +7,11 @@ import "~~/styles/globals.css";
 const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : `http://localhost:${process.env.PORT || 3000}`;
-const imageUrl = `${baseUrl}/wx.jpg`;
+const imageUrl = `${baseUrl}/porcelain-banner.jpg`;
 
-const title = "huahua | NFTMarket";
-const titleTemplate = "%s | SpeedRunEthereum";
-const description = "Built with 🏗 Scaffold-ETH 2";
+const title = "瓷板画数字艺术馆";
+const titleTemplate = "%s | 瓷板画数藏";
+const description = "传承千年瓷板画工艺，连接数字艺术未来";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -42,14 +42,14 @@ export const metadata: Metadata = {
     description,
   },
   icons: {
-    icon: [{ url: "/wx.jpg", sizes: "32x32", type: "image/gif" }],
+    icon: [{ url: "/porcelain-banner.jpg", sizes: "32x32", type: "image/png" }],
   },
 };
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <html suppressHydrationWarning>
-      <body>
+      <body className="bg-transparent">
         <ThemeProvider enableSystem>
           <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
         </ThemeProvider>

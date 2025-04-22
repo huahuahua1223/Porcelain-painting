@@ -245,10 +245,10 @@ const CreateNFTPage: NextPage = () => {
         await saveNFTToDB(data);
       }
 
-      notification.success("NFT Minted successfully!");
+      notification.success("数藏铸造成功!");
     } catch (error) {
       notification.remove(notificationId);
-      notification.error("Failed to mint NFT.");
+      notification.error("铸造数藏失败.");
       console.error(error);
     }
   };
@@ -408,7 +408,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -488,7 +488,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           <h1 className="text-5xl font-bold mb-4 relative">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
               drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-              铸造你的NFT
+              铸造你的数藏
             </span>
           </h1>
           <p className="text-xl text-base-content/70">
@@ -514,7 +514,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   className="flex items-center gap-2"
                 >
                   <span className="text-primary">•</span>
-                  为您的 NFT 添加独特的名称和描述
+                  为您的 数藏 添加独特的名称和描述
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -20 }}
@@ -555,7 +555,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             {/* NFT名称输入 */}
             <div className="mb-6">
               <label className="block text-xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                NFT 名称
+              数藏 名称
               </label>
               <div className="relative">
                 <input
@@ -563,7 +563,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="input input-bordered w-full bg-base-200 pr-10 transition-all hover:bg-base-300 focus:ring-2 focus:ring-primary"
-                  placeholder="为你的NFT起个独特的名字"
+                  placeholder="为你的数藏起个独特的名字"
                 />
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -576,14 +576,14 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             {/* NFT描述输入 */}
             <div className="mb-6">
               <label className="block text-xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                NFT 描述
+              数藏 描述
               </label>
               <div className="relative">
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="textarea textarea-bordered w-full h-32 bg-base-200 transition-all hover:bg-base-300 focus:ring-2 focus:ring-primary"
-                  placeholder="描述一下你的NFT特色..."
+                  placeholder="描述一下你的数藏特色..."
                 />
                 <span className="absolute right-3 top-3 text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -663,7 +663,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             {/* 添加属性设置部分 */}
           <div className="w-full max-w-3xl border border-gray-300 p-6 rounded-xl shadow-lg mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">NFT 属性设置</h2>
+              <h2 className="text-2xl font-bold">数藏 属性设置</h2>
               <button
                 className="btn btn-primary btn-sm"
                 onClick={addNewAttribute}
@@ -741,7 +741,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           {/* 右侧预览部分 */}
           <div className="w-full lg:w-4/12 border border-gray-300 p-6 rounded-xl shadow-lg bg-base-100">
             <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              NFT 预览
+            数藏 预览
             </h2>
             
             {isBatchMode ? (

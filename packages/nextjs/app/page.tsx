@@ -22,293 +22,180 @@ const Home: NextPage = () => {
     visible: { y: 0, opacity: 1 }
   };
 
-  // 特色卡片数据
-  const features = [
+  // 浮动图片配置
+  const floatingImages = [
     {
-      icon: "🎨",
-      title: "创作与铸造",
-      description: "创建独特的NFT艺术品，设定版税，开启您的创作之旅"
+      src: "/porcelain-1.jpg",
+      alt: "传统瓷板画",
+      delay: 0
     },
     {
-      icon: "💎",
-      title: "交易市场",
-      description: "安全可靠的交易平台，买卖您喜爱的NFT作品"
+      src: "/porcelain-2.jpg",
+      alt: "现代瓷板画",
+      delay: 0.5
     },
     {
-      icon: "🎁",
-      title: "盲盒惊喜",
-      description: "体验开启神秘盲盒的刺激，获得稀有NFT的机会"
+      src: "/porcelain-3.jpg",
+      alt: "瓷板画工艺",
+      delay: 1
     },
     {
-      icon: "✨",
-      title: "碎片化共享",
-      description: "参与NFT碎片化，以更低门槛参与优质资产"
+      src: "/porcelain-4.jpg",
+      alt: "瓷板画展示",
+      delay: 1.5
     }
   ];
 
-  // 添加装饰性配置
-  const floatingIcons = [
-    { icon: "🎨", delay: 0 },
-    { icon: "💎", delay: 1 },
-    { icon: "✨", delay: 2 },
-    { icon: "🌟", delay: 3 },
-    { icon: "🎁", delay: 4 },
+  // 平台特色数据
+  const platformFeatures = [
+    {
+      icon: "🔒",
+      title: "数字确权",
+      description: "基于区块链技术，为每件瓷板画作品提供唯一数字身份认证"
+    },
+    {
+      icon: "💎",
+      title: "价值保障",
+      description: "通过智能合约确保艺术品交易的安全性和透明度"
+    },
+    {
+      icon: "🎨",
+      title: "艺术传承",
+      description: "连接传统工艺大师与数字艺术收藏家，促进文化传承"
+    },
+    {
+      icon: "🌐",
+      title: "全球市场",
+      description: "打造全球化的瓷板画数字艺术交易平台"
+    }
   ];
 
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: 2 + Math.random() * 3,
-    delay: Math.random() * 2,
-  }));
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
-      {/* 动态粒子背景 */}
-      {particles.map((particle, i) => (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* 上层：介绍内容 */}
+      <div className="relative z-10">
         <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-primary/30 rounded-full"
-          animate={{
-            x: ["0%", `${particle.x}%`, "0%"],
-            y: ["0%", `${particle.y}%`, "0%"],
-            opacity: [0, 1, 0],
-            scale: [0, 1.5, 0],
-          }}
-          transition={{
-            duration: particle.duration,
-            delay: particle.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-
-      {/* 浮动图标 */}
-      {floatingIcons.map((item, index) => (
-        <motion.div
-          key={index}
-          className="absolute text-4xl"
-          initial={{ opacity: 0, y: 100 }}
-          animate={{
-            opacity: [0, 1, 0],
-            y: [-20, -100, -20],
-            x: [Math.random() * 100, Math.random() * -100, Math.random() * 100],
-          }}
-          transition={{
-            duration: 5,
-            delay: item.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
+          className="container mx-auto px-6 py-16"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          {item.icon}
-        </motion.div>
-      ))}
+          {/* 主标题 */}
+          <motion.div variants={itemVariants} className="text-center mb-12">
+            <h1 className="text-5xl font-bold mb-4">
+              <span className="block mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                非遗瓷艺数字确权与交易平台
+              </span>
+              <span className="text-xl text-base-content/70">
+                传承千年工艺，链接数字未来
+              </span>
+            </h1>
+          </motion.div>
 
-      {/* 背景装饰增强 */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute w-[600px] h-[600px] -top-48 -left-48 bg-primary/20 rounded-full blur-[120px]"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute w-[600px] h-[600px] -bottom-48 -right-48 bg-secondary/20 rounded-full blur-[120px]"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-            rotate: [360, 180, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </div>
+          {/* 平台介绍 */}
+          <motion.div variants={itemVariants} className="mb-12">
+            <div className="bg-base-100/20 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/10">
+              <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">平台简介</h2>
+              <div className="grid grid-cols-1 gap-8">
+                <div>
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-800">非遗瓷艺数字化</h3>
+                  <p className="text-gray-700 leading-relaxed text-lg">
+                    我们致力于将传统瓷板画艺术与现代区块链技术相结合，为每件作品提供唯一的数字身份认证。
+                    通过数字化确权，确保艺术品的真实性和所有权，让传统艺术在数字时代焕发新生。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
-      <motion.div
-        className="relative z-10 container mx-auto px-6 py-16"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* 主标题区域增强 */}
-        <motion.div variants={itemVariants} className="text-center mb-16">
-          <motion.div
-            animate={{
-              scale: [1, 1.02, 1],
-              opacity: [0.8, 1, 0.8],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 blur-3xl"
-          />
-          <h1 className="text-5xl font-bold mb-6">
-            <motion.span 
-              className="block mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
-              animate={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{ backgroundSize: "200% 200%" }}
-            >
-              欢迎来到 NFT 艺术市场
-            </motion.span>
-            <span className="text-2xl text-base-content/70">
-              探索、创造、交易独特的数字艺术品
-            </span>
-          </h1>
-        </motion.div>
+          {/* 平台特色 */}
+          <motion.div variants={itemVariants} className="mb-12">
+            <h2 className="text-2xl font-bold text-center mb-8">平台特色</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {platformFeatures.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-base-100/30 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-base-content/5
+                    hover:shadow-2xl hover:bg-base-100/40 transition-all duration-300"
+                  whileHover={{ y: -5 }}
+                >
+                  <span className="text-4xl mb-4 block">{feature.icon}</span>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-base-content/70">{feature.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
-        {/* 主图区域 */}
-        <motion.div
-          variants={itemVariants}
-          className="relative w-full max-w-4xl mx-auto mb-16 group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl transform group-hover:scale-105 transition-transform duration-500" />
-          <motion.div
-            className="relative rounded-3xl overflow-hidden border-4 border-base-300/50 shadow-2xl"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Image
-              src="/pinksea.png"
-              width={1200}
-              height={450}
-              alt="NFT市场横幅"
-              className="w-full object-cover"
-            />
+          {/* 行动按钮 */}
+          <motion.div variants={itemVariants} className="text-center">
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/market">
+                <motion.button
+                  className="btn bg-[#DBA363] hover:bg-[#C89255] text-white border-0 btn-lg shadow-lg"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  浏览艺术品
+                </motion.button>
+              </Link>
+              <Link href="/create">
+                <motion.button
+                  className="btn bg-[#6B7A8C] hover:bg-[#596A7E] text-white border-0 btn-lg shadow-lg"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  创作与铸造
+                </motion.button>
+              </Link>
+            </div>
           </motion.div>
         </motion.div>
+      </div>
 
-        {/* 3D 展示区域 */}
-        <motion.div
-          variants={itemVariants}
-          className="relative w-full max-w-4xl mx-auto mb-16"
-        >
-          <div className="relative rounded-3xl overflow-hidden border-4 border-base-300/50 shadow-2xl">
-            <iframe 
-              width="100%" 
-              height="480" 
-              src="https://www.51jianmo.com/newModel/?code=M000000000010018B6FDK&desc=0&icon=1&type=1&quick=1&opacity=1&full=1&isxcx=0" 
-              allowFullScreen
-              className="w-full"
-            />
-          </div>
-        </motion.div>
-
-        {/* 特色功能区域增强 */}
-        <motion.div variants={itemVariants} className="mb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                className="bg-base-100/50 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-base-content/5
-                  hover:shadow-2xl hover:bg-base-100/60 transition-all duration-300"
-                whileHover={{ y: -5, scale: 1.02 }}
-              >
-                <motion.span 
-                  className="text-4xl mb-4 block"
-                  animate={{
-                    y: [0, -5, 0],
-                    rotate: [0, 5, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: index * 0.2,
-                  }}
-                >
-                  {feature.icon}
-                </motion.span>
-                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  {feature.title}
-                </h3>
-                <p className="text-base-content/70">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* 行动按钮区域增强 */}
-        <motion.div variants={itemVariants} className="text-center">
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/market">
-              <motion.button
-                className="btn btn-primary btn-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                开始探索
-              </motion.button>
-            </Link>
-            <Link href="/create">
-              <motion.button
-                className="btn btn-secondary btn-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                创建 NFT
-              </motion.button>
-            </Link>
-          </div>
-          <motion.p
-            variants={itemVariants}
-            className="mt-6 text-base-content/70"
+      {/* 下层：浮动图片 */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {floatingImages.map((image, index) => (
+          <motion.div
+            key={index}
+            className="absolute w-64 h-[650px]"
+            style={{
+              left: `${42 + (index - 1.5) * 21}%`,
+              top: '20%',
+              transform: 'translateY(-50%)'
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.3, 0.5, 0.3],
+              scale: [1, 1.05, 1]
+            }}
+            transition={{
+              duration: 4,
+              delay: image.delay,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           >
-            加入我们的社区，开启您的 NFT 之旅
-          </motion.p>
-        </motion.div>
-
-        {/* 底部装饰 */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-12 text-center text-base-content/50"
-        >
-          <div className="flex justify-center gap-4 mb-4">
-            {["🎨", "💎", "✨", "🌟", "🎁"].map((emoji, index) => (
-              <motion.span
-                key={index}
-                animate={{
-                  y: [0, -10, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  delay: index * 0.2,
-                  repeat: Infinity,
-                }}
-                className="text-2xl"
-              >
-                {emoji}
-              </motion.span>
-            ))}
-          </div>
-          <p className="text-sm">探索无限可能的 NFT 世界</p>
-        </motion.div>
-      </motion.div>
+            <Image
+              src={image.src}
+              alt={image.alt}
+              fill
+              className="object-cover rounded-2xl shadow-2xl"
+            />
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"
+              animate={{
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };

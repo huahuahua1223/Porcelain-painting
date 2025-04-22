@@ -62,8 +62,8 @@ export const AirdropRecords = ({ events }: AirdropRecordsProps) => {
   return {
     title: "空投领取记录",
     subtitle: "查看所有空投的领取历史",
-    gradientFrom: "accent",
-    gradientTo: "primary",
+    gradientFrom: "primary",
+    gradientTo: "secondary",
     events,
     statsData,
     tableHeaders: ["Token ID", "领取者", "领取时间", "操作"],

@@ -181,7 +181,7 @@ const Fractionalize: NextPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -266,13 +266,14 @@ const Fractionalize: NextPage = () => {
       >
         {/* 标题部分 */}
         <motion.div variants={itemVariants} className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              NFT 碎片化交易
+          <h1 className="text-5xl font-bold mb-4 relative">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent
+            drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+              数藏 碎片化交易
             </span>
           </h1>
           <p className="text-xl text-base-content/70">
-            将您的 NFT 转化为可交易的代币份额
+            将您的 数藏 转化为可交易的碎片份额
           </p>
         </motion.div>
 
@@ -293,7 +294,7 @@ const Fractionalize: NextPage = () => {
                   className="flex items-center gap-2"
                 >
                   <span className="text-primary">•</span>
-                  选择要交易的 NFT 碎片
+                  选择要交易的 数藏 碎片
                 </motion.li>
                 <motion.li
                   initial={{ opacity: 0, x: -20 }}
@@ -490,7 +491,7 @@ const Fractionalize: NextPage = () => {
               </motion.span>
             ))}
           </div>
-          <p className="text-sm">开启 NFT 碎片化交易新时代</p>
+          <p className="text-sm">开启 数藏 碎片化交易新时代</p>
         </motion.div>
       </motion.div>
     </div>

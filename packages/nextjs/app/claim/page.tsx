@@ -103,17 +103,17 @@ export default function ClaimPage() {
         block_number: receipt?.blockNumber
       });
 
-      notification.success("NFT 领取成功！");
+      notification.success("数藏领取成功！");
     } catch (error) {
-      console.error("领取 NFT 错误:", error);
-      notification.error("领取 NFT 失败");
+      console.error("领取数藏错误:", error);
+      notification.error("领取数藏失败");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -190,11 +190,11 @@ export default function ClaimPage() {
             <h1 className="text-6xl font-bold mb-4 relative">
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
                 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                领取空投 NFT
+                领取空投数藏
               </span>
             </h1>
             <p className="text-xl text-base-content/70">
-              上传您的证明文件，领取专属 NFT
+              上传您的证明文件，领取专属数藏
             </p>
           </motion.div>
 
@@ -245,7 +245,7 @@ export default function ClaimPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-primary">•</span>
-                    领取成功后，NFT 将直接发送到您的钱包
+                    领取成功后，数藏 将直接发送到您的钱包
                   </li>
                 </ul>
               </div>
@@ -318,7 +318,7 @@ export default function ClaimPage() {
                   onClick={handleClaim}
                   disabled={!proof.length || tokenId === 0 || loading}
                 >
-                  领取 NFT
+                  领取 数藏
                 </motion.button>
               </div>
             </motion.div>
@@ -386,7 +386,7 @@ export default function ClaimPage() {
             </motion.span>
           ))}
         </div>
-        <p className="text-sm">享受 NFT 带来的无限可能</p>
+        <p className="text-sm">享受 数藏 带来的无限可能</p>
       </motion.div>
     </div>
   );

@@ -74,7 +74,7 @@ export const MysteryBoxRecords = ({ events }: MysteryBoxRecordsProps) => {
     gradientTo: "secondary",
     events,
     statsData,
-    tableHeaders: ["Token ID", "购买者", "NFT URI", "购买时间", "操作"],
+    tableHeaders: ["Token ID", "购买者", "数藏 URI", "购买时间", "操作"],
     colSpan: 5,
     emptyMessage: "暂无盲盒购买记录",
     renderTableRow,

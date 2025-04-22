@@ -27,7 +27,7 @@ type HeaderMenuLink = {
 
 export const menuLinks: HeaderMenuLink[] = [
   {
-    label: "铸造NFT",
+    label: "铸造数藏",
     href: "/create",
     icon: <WrenchScrewdriverIcon className="h-4 w-4" />,
     subMenu: [
@@ -36,13 +36,13 @@ export const menuLinks: HeaderMenuLink[] = [
     ],
   },
   {
-    label: "NFT市场",
+    label: "数藏市场",
     href: "/market",
     icon: <ShoppingCartIcon className="h-4 w-4" />,
     subMenu: [
       { label: "碎片化市场", href: "/fractionalize" },
       { label: "盲盒市场", href: "/market/mysterybox" },
-      { label: "3d 模型", href: "/models" },
+      // { label: "3d 模型", href: "/models" },
     ],
   },
   {
@@ -106,8 +106,8 @@ export const HeaderMenuLinks = () => {
               href={href || "#"}
               passHref
               className={`${
-                isActive ? "bg-secondary shadow-md" : ""
-              } hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full flex items-center gap-2`}
+                isActive ? "bg-secondary/70 shadow-md" : ""
+              } hover:bg-secondary/50 hover:shadow-md focus:!bg-secondary/70 active:!text-neutral py-1.5 px-3 text-sm rounded-full flex items-center gap-2`}
             >
               {icon}
               <span>{label}</span>
@@ -115,7 +115,7 @@ export const HeaderMenuLinks = () => {
 
             {subMenu && (
               <ul
-                className={`absolute left-0 top-full mt-1 bg-base-100 shadow-lg rounded-box p-2 w-40 ${
+                className={`absolute left-0 top-full mt-1 bg-base-100/80 backdrop-blur-sm shadow-lg rounded-box p-2 w-40 ${
                   isSubMenuActive ? "block" : "hidden"
                 }`}
               >
@@ -124,7 +124,7 @@ export const HeaderMenuLinks = () => {
                     <Link
                       href={href || "#"}
                       passHref
-                      className="hover:bg-secondary hover:text-white py-1 px-3 text-sm rounded-md block"
+                      className="hover:bg-secondary/70 hover:text-white py-1 px-3 text-sm rounded-md block"
                     >
                       {label}
                     </Link>
@@ -151,13 +151,13 @@ export const Header = () => {
   );
 
   return (
-    <div className="sticky xl:static top-0 navbar bg-primary min-h-0 flex-shrink-0 justify-between z-20 shadow-md shadow-secondary px-0 sm:px-2">
+    <div className="sticky xl:static top-0 navbar bg-transparent backdrop-blur-sm min-h-0 flex-shrink-0 justify-between z-20 shadow-md shadow-secondary/30 px-0 sm:px-2">
       <div className="navbar-start w-auto xl:w-1/2">
         {/* Mobile dropdown */}
         <div className="xl:hidden dropdown" ref={burgerMenuRef}>
           <label
             tabIndex={0}
-            className={`ml-1 btn btn-ghost ${isDrawerOpen ? "hover:bg-secondary" : "hover:bg-transparent"}`}
+            className={`ml-1 btn btn-ghost ${isDrawerOpen ? "hover:bg-secondary/50" : "hover:bg-transparent"}`}
             onClick={() => {
               setIsDrawerOpen((prevIsOpenState) => !prevIsOpenState);
             }}
@@ -167,7 +167,7 @@ export const Header = () => {
           {isDrawerOpen && (
             <ul
               tabIndex={0}
-              className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
+              className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100/80 backdrop-blur-sm rounded-box w-52"
               onClick={() => {
                 setIsDrawerOpen(false);
               }}
@@ -180,11 +180,11 @@ export const Header = () => {
         {/* Desktop menu */}
         <Link href="/" passHref className="hidden xl:flex items-center gap-1 ml-4 mr-6 shrink-0">
           <div className="flex relative w-10 h-10">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/hello.gif" />
+            <Image alt="瓷板画logo" className="cursor-pointer" fill src="/Adobe Express - file.png" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold leading-tight">huahua</span>
-            <span className="text-xs">NFT Market</span>
+            <span className="font-bold leading-tight">瓷板画</span>
+            <span className="text-xs">数字艺术馆</span>
           </div>
         </Link>
         <ul className="hidden xl:flex xl:flex-nowrap menu menu-horizontal px-1 gap-2">
@@ -193,7 +193,7 @@ export const Header = () => {
       </div>
       <div className="navbar-end flex-grow mr-4">
         <RainbowKitCustomConnectButton />
-        <FaucetButton />
+        {/* <FaucetButton /> */}
       </div>
     </div>
   );

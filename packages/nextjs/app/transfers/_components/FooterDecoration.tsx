@@ -25,7 +25,7 @@ export const FooterDecoration = () => {
           </motion.span>
         ))}
       </div>
-      <p className="text-sm">实时追踪 NFT 交易动态</p>
+      <p className="text-sm">实时追踪 数藏 交易动态</p>
     </motion.div>
   );
 }; 

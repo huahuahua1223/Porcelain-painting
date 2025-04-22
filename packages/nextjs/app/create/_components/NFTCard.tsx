@@ -102,10 +102,10 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
         value: listingFee, // 发送手续费
       });
 
-      notification.success("NFT listed successfully!");
+      notification.success("数藏上架成功!");
     } catch (error) {
       console.error(error);
-      notification.error("Listing failed");
+      notification.error("上架失败");
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,6 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
 
   // 下架
   const handleUnlistNFT = async () => {
-    console.log("下架 NFT:", nft.id);
     try {
       await writeContractAsync({
         functionName: "unlistNft",
@@ -139,7 +138,7 @@ export const NFTCard = ({ nft }: { nft: Collectible }) => {
         args: [BigInt(nft.id), BigInt(fractionCount)],
       });
 
-      notification.success("NFT 碎片化成功!");
+      notification.success("数藏 碎片化成功!");
     } catch (error) {
       console.error(error);
       notification.error("碎片化失败");

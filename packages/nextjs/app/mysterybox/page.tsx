@@ -153,7 +153,7 @@ const MysteryBoxPage: NextPage = () => {
   // 修改创建盲盒函数
   const handleCreateMysteryBox = async () => {
     if (!price || nftFiles.length === 0) {
-      notification.error("请填写价格并上传至少一个NFT文件");
+      notification.error("请填写价格并上传至少一个数藏文件");
       return;
     }
 
@@ -169,8 +169,8 @@ const MysteryBoxPage: NextPage = () => {
       // 上传元数据到IPFS
       const metadataPromises = nftFiles.map(async (file, index) => {
         const metadata = {
-          name: `Mystery NFT #${index + 1}`,
-          description: "A mysterious NFT from the mystery box",
+          name: `神秘数藏 #${index + 1}`,
+          description: "一个盲盒中的神秘数藏",
           image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${file.ipfsHash}`,
           attributes: attributes.filter(attr => attr.trait_type && attr.value) // 只包含非空属性
         };
@@ -312,8 +312,8 @@ const MysteryBoxPage: NextPage = () => {
 
       // 创建并上传元数据
       const metadata = {
-        name: `Mystery NFT #${mysteryBoxInfo ? Number(mysteryBoxInfo.totalOptions) + 1 : 1}`,
-        description: "A mysterious NFT from the mystery box",
+        name: `神秘数藏 #${mysteryBoxInfo ? Number(mysteryBoxInfo.totalOptions) + 1 : 1}`,
+        description: "一个盲盒中的神秘数藏",
         image: `https://aqua-famous-koala-370.mypinata.cloud/ipfs/${uploadedFile.IpfsHash}`,
         attributes: attributes.filter(attr => attr.trait_type && attr.value) // 只包含非空属性
       };
@@ -345,7 +345,7 @@ const MysteryBoxPage: NextPage = () => {
         block_number: receipt?.blockNumber
       });
 
-      notification.success("新NFT添加成功！");
+      notification.success("新数藏添加成功！");
       setNewUri("");
       setNewUriFile(null);
       refetchBoxInfo();
@@ -374,18 +374,18 @@ const MysteryBoxPage: NextPage = () => {
   const statsData = mysteryBoxInfo ? [
     { label: "盲盒价格", value: `${formatEther(mysteryBoxInfo.price)} ETH`, icon: "💰" },
     { label: "盲盒状态", value: mysteryBoxInfo.isActive ? "已激活" : "未激活", icon: "🔮" },
-    { label: "可选NFT", value: mysteryBoxInfo.totalOptions.toString(), icon: "🎯" },
+    { label: "可选数藏", value: mysteryBoxInfo.totalOptions.toString(), icon: "🎯" },
   ] : [];
 
   const tips = [
-    "上传优质的 NFT 图片文件",
+    "上传优质的 数藏 图片文件",
     "设置合理的盲盒价格",
-    "添加丰富的 NFT 属性",
+    "添加丰富的 数藏 属性",
     "激活盲盒开始销售",
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -462,11 +462,11 @@ const MysteryBoxPage: NextPage = () => {
             <h1 className="text-6xl font-bold mb-4 relative">
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
                 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                NFT 盲盒管理
+                数藏 盲盒管理
               </span>
             </h1>
             <p className="text-xl text-base-content/70">
-              创建和管理您的 NFT 盲盒
+              创建和管理您的 数藏 盲盒
             </p>
           </motion.div>
 
@@ -544,7 +544,7 @@ const MysteryBoxPage: NextPage = () => {
                   <div>
                     <p className="text-lg">价格: {formatEther(mysteryBoxInfo.price)} ETH</p>
                     <p className="text-lg">状态: {mysteryBoxInfo.isActive ? "激活" : "未激活"}</p>
-                    <p className="text-lg">可选NFT数量: {mysteryBoxInfo.totalOptions.toString()}</p>
+                    <p className="text-lg">可选数藏数量: {mysteryBoxInfo.totalOptions.toString()}</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <button
@@ -571,7 +571,7 @@ const MysteryBoxPage: NextPage = () => {
 
                 {/* 添加新URI */}
                 <div className="mt-4">
-                  <h3 className="text-xl font-bold mb-2">添加新NFT</h3>
+                  <h3 className="text-xl font-bold mb-2">添加新数藏</h3>
                   <div className="flex gap-2">
                     <input
                       type="file"
@@ -584,7 +584,7 @@ const MysteryBoxPage: NextPage = () => {
                       onClick={handleAddNewUri}
                       disabled={!newUriFile}
                     >
-                      添加NFT
+                      添加数藏
                     </button>
                   </div>
                 </div>
@@ -639,7 +639,7 @@ const MysteryBoxPage: NextPage = () => {
 
               {/* 文件上传 */}
               <div className="mb-6">
-                <label className="block text-lg mb-2">上传 NFT 文件</label>
+                <label className="block text-lg mb-2">上传 数藏 文件</label>
                 <div
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
@@ -722,7 +722,7 @@ const MysteryBoxPage: NextPage = () => {
               {/* 添加属性设置部分 */}
               <div className="w-full max-w-3xl border border-gray-300 p-6 rounded-xl shadow-lg mb-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold">NFT 属性设置</h2>
+                  <h2 className="text-2xl font-bold">数藏 属性设置</h2>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={addAttribute}
@@ -812,7 +812,7 @@ const MysteryBoxPage: NextPage = () => {
                 </motion.span>
               ))}
             </div>
-            <p className="text-sm">创造独特的 NFT 盲盒体验</p>
+            <p className="text-sm">创造独特的 数藏 盲盒体验</p>
           </motion.div>
         </motion.div>
       </div>

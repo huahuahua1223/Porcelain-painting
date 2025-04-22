@@ -173,7 +173,7 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
                 whileHover={{ scale: 1.01 }}
             >
                 <h3 className="text-xl font-bold text-yellow-800 mb-2">注意</h3>
-                <p className="text-yellow-700">以下是您持有的NFT碎片，您可以进行转赠、上架或赎回操作。</p>
+                <p className="text-yellow-700">以下是您持有的数藏碎片，您可以进行转赠、上架或赎回操作。</p>
             </motion.div>
 
             <AnimatePresence>
@@ -184,7 +184,7 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
                         exit={{ opacity: 0 }}
                         className="text-center py-10 bg-base-200/50 backdrop-blur-sm rounded-3xl"
                     >
-                        <p className="text-lg text-base-content/70">您没有可用的NFT碎片</p>
+                        <p className="text-lg text-base-content/70">您没有可用的数藏碎片</p>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -263,7 +263,7 @@ export const FractionOperations = ({ onOperationComplete }: { onOperationComplet
             {/* 转赠模态框 */}
             <dialog className={`modal ${showTransferModal ? "modal-open" : ""}`}>
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg mb-4">转赠 NFT 碎片</h3>
+                    <h3 className="font-bold text-lg mb-4">转赠 数藏 碎片</h3>
                     <div className="form-control">
                         <label className="label">
                             <span className="label-text">接收地址</span>

@@ -189,7 +189,7 @@ const ListNFTsPage: NextPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 渐变光晕背景 */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-[500px] h-[500px] -top-48 -left-48 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
@@ -265,7 +265,7 @@ const ListNFTsPage: NextPage = () => {
           <h1 className="text-5xl font-bold mb-4 relative">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent 
               drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-              NFT 市场
+              数藏 市场
             </span>
           </h1>
           <motion.p
@@ -360,7 +360,7 @@ const ListNFTsPage: NextPage = () => {
 
                   <div className="card-body relative z-10">
                     <h2 className="card-title text-xl font-bold">
-                      {metadata?.name || "Unnamed NFT"}
+                      {metadata?.name || "未命名数藏"}
                     </h2>
                     <p className="text-2xl font-semibold text-primary">
                       {Number(priceETH)} ETH
@@ -453,7 +453,7 @@ const ListNFTsPage: NextPage = () => {
               </motion.span>
             ))}
           </div>
-          <p className="text-sm">探索无限可能的 NFT 世界</p>
+          <p className="text-sm">探索无限可能的 数藏 世界</p>
         </motion.div>
       </div>
     </div>

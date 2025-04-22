@@ -58,9 +58,9 @@ export const RewardRecords = ({ events }: RewardRecordsProps) => {
 
   return {
     title: "忠诚度奖励记录",
-    subtitle: "查看所有 NFT 的忠诚度奖励领取历史",
+    subtitle: "查看所有 数藏 的忠诚度奖励领取历史",
     gradientFrom: "primary",
-    gradientTo: "accent",
+    gradientTo: "secondary",
     events,
     statsData,
     tableHeaders: ["Token ID", "领取者", "奖励金额 (ETH)", "领取时间", "操作"],

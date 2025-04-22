@@ -488,7 +488,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                                     <motion.div variants={itemVariants}>
                                         <h3 className="text-lg font-semibold mb-3">拥有者</h3>
                                         {isFractionalized ? (
-                                            <div className="text-warning">该NFT已被碎片化，无法查看拥有者</div>
+                                            <div className="text-warning">该数藏已被碎片化，无法查看拥有者</div>
                                         ) : (
                                             <Address address={nftData?.owner} />
                                         )}
@@ -523,7 +523,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
                                                 whileTap={{ scale: 0.95 }}
                                                 disabled={nftData?.owner === connectedAddress}
                                             >
-                                                {nftData?.owner === connectedAddress ? "这是你的NFT" : "购买 NFT"}
+                                                {nftData?.owner === connectedAddress ? "这是你的数藏" : "购买数藏"}
                                             </motion.button>
                                             {nftData?.owner === connectedAddress && (
                                                 <motion.button
@@ -644,7 +644,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
             {/* 上架弹窗 */}
             <dialog className={`modal ${isListModalOpen ? "modal-open" : ""}`}>
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg mb-4">上架NFT</h3>
+                    <h3 className="font-bold text-lg mb-4">上架数藏</h3>
                     <div className="form-control">
                         <label className="label">
                             <span className="label-text">设置价格 (ETH)</span>
@@ -675,7 +675,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
             {/* 碎片化弹窗 */}
             <dialog className={`modal ${isFractionalizeModalOpen ? "modal-open" : ""}`}>
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg mb-4">碎片化NFT</h3>
+                    <h3 className="font-bold text-lg mb-4">碎片化数藏</h3>
                     <div className="form-control">
                         <label className="label">
                             <span className="label-text">设置碎片数量</span>
@@ -707,7 +707,7 @@ const NFTDetailPage = ({ params }: { params: { tokenId: string } }) => {
             {/* 举报弹窗 */}
             <dialog className={`modal ${isReportModalOpen ? "modal-open" : ""}`}>
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg mb-4">举报 NFT</h3>
+                    <h3 className="font-bold text-lg mb-4">举报 数藏</h3>
                     <div className="form-control">
                         <label className="label">
                             <span className="label-text">举报原因</span>

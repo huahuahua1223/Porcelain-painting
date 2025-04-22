@@ -14,7 +14,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; // 防止重入�
 import "./IERC4907.sol"; // 导入 ERC4907 接口
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-
 contract YourCollectible is
 	ERC721,
 	ERC721Enumerable,
@@ -99,12 +98,12 @@ contract YourCollectible is
     event FractionForSale(uint256 indexed tokenId, address indexed owner, uint256 price);
     event FractionSaleCancelled(uint256 indexed tokenId, address indexed owner);
     event FractionBought(uint256 indexed tokenId, address indexed buyer, address indexed seller, uint256 amount, uint256 pricePerFraction);
-    event FractionTransferred(
-        uint256 indexed tokenId,
-        address indexed from,
-        address indexed to,
-        uint256 amount
-    );
+    // event FractionTransferred(
+    //     uint256 indexed tokenId,
+    //     address indexed from,
+    //     address indexed to,
+    //     uint256 amount
+    // );
     event NFTRedeemed(uint256 indexed tokenId, address indexed redeemer);
     event LoyaltyRewardClaimed(uint256 indexed tokenId, address indexed holder, uint256 amount);
     event MysteryBoxCreated(uint256 price, uint256 totalOptions);
@@ -446,7 +445,7 @@ contract YourCollectible is
             fractionOwners[tokenId].push(to);
         }
 
-        emit FractionTransferred(tokenId, msg.sender, to, amount);
+        // emit FractionTransferred(tokenId, msg.sender, to, amount);
     }
 
     // 集齐所有碎片召唤神龙
@@ -473,6 +472,11 @@ contract YourCollectible is
         nftItems[tokenId].isListed = false; // 碎片化后通常不再上架
     
         emit NFTRedeemed(tokenId, msg.sender);
+    }
+
+    // 返回碎片总量
+    function getTotalFractions(uint256 tokenId) public view returns (uint256) {
+        return totalFractions[tokenId];
     }
 
     // 获取所有上架的碎片

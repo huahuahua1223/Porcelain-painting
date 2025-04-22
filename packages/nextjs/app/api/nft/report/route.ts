@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     if (existingReports.length > 0) {
       return NextResponse.json({
         success: false,
-        error: '您已经举报过该NFT'
+        error: '您已经举报过该数藏'
       }, { 
         status: 400 
       });

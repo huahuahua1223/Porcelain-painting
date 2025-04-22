@@ -39,13 +39,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true,
-      message: 'NFT数据保存成功'
+      message: '数藏数据保存成功'
     });
   } catch (error) {
-    console.error('保存NFT数据失败:', error);
+    console.error('保存数藏数据失败:', error);
     return NextResponse.json({ 
       success: false,
-      error: '保存NFT数据失败' 
+      error: '保存数藏数据失败' 
     }, { 
       status: 500 
     });

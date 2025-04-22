@@ -223,10 +223,10 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
         block_number: receipt?.blockNumber
       });
 
-      notification.success("NFT listed successfully!");
+      notification.success("数藏上架成功!");
     } catch (error) {
       console.error(error);
-      notification.error("Listing failed");
+      notification.error("上架失败");
     } finally {
       setLoading(false);
     }
@@ -234,7 +234,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
   // 下架
   const handleUnlistNFT = async () => {
-    console.log("下架 NFT:", nft.id);
+    console.log("下架 数藏:", nft.id);
     try {
       await writeContractAsync({
         functionName: "delistItem",
@@ -275,7 +275,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
         block_number: receipt?.blockNumber
       });
 
-      notification.success("NFT 碎片化成功!");
+      notification.success("数藏 碎片化成功!");
       onNFTUpdate(); // 调用回调函数通知父组件更新
     } catch (error) {
       console.error(error);
@@ -316,7 +316,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
         block_number: receipt?.blockNumber
       });
 
-      notification.success("NFT租赁设置成功!");
+      notification.success("数藏租赁设置成功!");
 
       // 调用回调函数刷新数据
       onNFTUpdate();
@@ -509,10 +509,10 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
                           block_number: receipt?.blockNumber
                         });
 
-                        notification.success("NFT transferred successfully!");
+                        notification.success("数藏转移成功!");
                       } catch (err) {
                         console.error("Error calling transferFrom function");
-                        notification.error("Transfer failed");
+                        notification.error("转移失败");
                       }
                     }}
                   >
@@ -537,7 +537,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
             {/* 保持现有的弹窗代码不变 */}
             <dialog className={`modal ${isListModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
-                <h3 className="font-bold text-lg mb-4">上架NFT</h3>
+                <h3 className="font-bold text-lg mb-4">上架数藏</h3>
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">设置价格 (ETH)</span>
@@ -574,7 +574,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
             <dialog className={`modal ${isFractionalizeModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
-                <h3 className="font-bold text-lg mb-4">碎片化NFT</h3>
+                <h3 className="font-bold text-lg mb-4">碎片化数藏</h3>
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">设置碎片数量</span>
@@ -611,7 +611,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
             <dialog className={`modal ${isRentalModalOpen ? "modal-open" : ""}`}>
               <div className="modal-box">
-                <h3 className="font-bold text-lg mb-4">设置 NFT 租赁</h3>
+                <h3 className="font-bold text-lg mb-4">设置 数藏 租赁</h3>
                 <div className="space-y-4">
                   <div className="form-control">
                     <label className="label">

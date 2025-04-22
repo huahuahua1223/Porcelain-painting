@@ -5,11 +5,12 @@
 
 :root,
 [data-theme] {
-  background: oklch(var(--b2));
+  background: transparent;
 }
 
 body {
   min-height: 100vh;
+  background-color: transparent;
 }
 
 h1,

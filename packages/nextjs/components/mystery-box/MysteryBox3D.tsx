@@ -5,7 +5,8 @@ import { Group } from 'three'
 
 function Model() {
   const group = useRef<Group>(null)
-  const { scene } = useGLTF('/models/mysteryBox.glb')
+  // const { scene } = useGLTF('/models/mysteryBox.glb')
+  const { scene } = useGLTF('/models/qinhuaci.glb')
 
   useFrame((state) => {
     if (group.current) {
@@ -84,4 +85,5 @@ export function MysteryBox3D() {
 }
 
 // 预加载模型
-useGLTF.preload('/models/mysteryBox.glb') 
+// useGLTF.preload('/models/mysteryBox.glb') 
+useGLTF.preload('/models/qinhuaci.glb') 

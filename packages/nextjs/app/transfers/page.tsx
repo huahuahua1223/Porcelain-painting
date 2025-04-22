@@ -95,7 +95,7 @@ const Transfers: NextPage = () => {
   // 加载状态显示
   if (isAllLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 flex justify-center items-center">
+      <div className="min-h-screen  flex justify-center items-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -124,7 +124,7 @@ const Transfers: NextPage = () => {
   // 错误状态显示
   if (errors.length > 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 flex justify-center items-center">
+      <div className="min-h-screen  flex justify-center items-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -134,7 +134,7 @@ const Transfers: NextPage = () => {
           <div className="space-y-2">
             {errors.map((error, index) => (
               <p key={index} className="text-sm">
-                {error.type}: {error.error?.message || "未知错误"}
+                {error.type}: {error.error ? String(error.error) : "未知错误"}
               </p>
             ))}
           </div>
@@ -152,7 +152,7 @@ const Transfers: NextPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 背景动画 */}
       <AnimatedBackground particles={particles} floatingIcons={floatingIcons} />
 
@@ -170,22 +170,22 @@ const Transfers: NextPage = () => {
         animate="visible"
       >
         {/* 交易记录部分 */}
-        <EventSection {...TradeRecords({ events: buyEvents })} />
+        <EventSection {...TradeRecords({ events: buyEvents || [] })} />
         
         {/* 租赁记录部分 */}
-        <EventSection {...LeaseRecords({ events: leaseEvents })} />
+        <EventSection {...LeaseRecords({ events: leaseEvents || [] })} />
         
         {/* 忠诚度奖励记录部分 */}
-        <EventSection {...RewardRecords({ events: rewardEvents })} />
+        <EventSection {...RewardRecords({ events: rewardEvents || [] })} />
         
         {/* 碎片交易记录部分 */}
-        <EventSection {...FractionRecords({ events: fractionEvents })} />
+        <EventSection {...FractionRecords({ events: fractionEvents || [] })} />
         
         {/* 盲盒购买记录部分 */}
-        <EventSection {...MysteryBoxRecords({ events: mysteryBoxEvents })} />
+        <EventSection {...MysteryBoxRecords({ events: mysteryBoxEvents || [] })} />
         
         {/* 空投领取记录部分 */}
-        <EventSection {...AirdropRecords({ events: airdropEvents })} />
+        <EventSection {...AirdropRecords({ events: airdropEvents || [] })} />
 
         {/* 底部装饰 */}
         <FooterDecoration />

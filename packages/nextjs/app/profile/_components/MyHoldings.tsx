@@ -75,15 +75,12 @@ export const MyHoldings = () => {
           const nftMetadata: NFTMetaData = await getMetadataFromIPFS(tokenURI as string);
 
           const userInfo = await yourCollectibleContract.read.userOf([tokenId]);
-          console.log("userinfo============", userInfo)
           const rentedTo = userInfo === "0x0000000000000000000000000000000000000000" ? undefined : userInfo;
-          console.log("rentedTo============", rentedTo)
 
           let rentExpiry;
           if (rentedTo) {
             const expiryTimestamp = await yourCollectibleContract.read.userExpires([tokenId]);
             rentExpiry = Number(expiryTimestamp);
-            console.log("rentExpiry============", rentExpiry);
           }
 
           collectibleUpdate.push({
@@ -100,7 +97,6 @@ export const MyHoldings = () => {
 
         // 2. 获取用户租赁的 NFT
         const totalSupply = await yourCollectibleContract.read.totalSupply();
-        console.log("totalSupply=============", totalSupply);
         
         // 遍历所有 NFT
         for (let i = 1; i <= Number(totalSupply); i++) {
@@ -123,7 +119,6 @@ export const MyHoldings = () => {
                 // 检查是否已经过期
                 const currentTime = Math.floor(Date.now() / 1000);
                 if (Number(expiryTimestamp) > currentTime) {
-                  console.log("Found rented NFT:", i);
                   collectibleUpdate.push({
                     id: Number(i),
                     uri: tokenURI,
@@ -329,7 +324,7 @@ export const MyHoldings = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <span className="text-base-content/70">
-            总共 {nonFractionalizedNFTs.length} 个非碎片化 NFT
+            总共 {nonFractionalizedNFTs.length} 个非碎片化 数藏
           </span>
         </div>
       </motion.div>

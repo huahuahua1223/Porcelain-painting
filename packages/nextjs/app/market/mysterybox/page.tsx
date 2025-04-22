@@ -168,7 +168,7 @@ const MysteryBoxMarket: NextPage = () => {
       }
       setNftImages(images);
     } catch (error) {
-      console.error("获取NFT图片失败:", error);
+      console.error("获取数藏图片失败:", error);
     } finally {
       setIsLoadingImages(false);
     }
@@ -182,7 +182,7 @@ const MysteryBoxMarket: NextPage = () => {
   }, [mysteryBoxInfo?.totalOptions]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 粒子背景 */}
       {decorativeConfig.particles.map((particle, i) => (
         <motion.div
@@ -353,7 +353,7 @@ const MysteryBoxMarket: NextPage = () => {
               </span>
             </h2>
             <p className="text-xl text-base-content/70 max-w-2xl mx-auto">
-              解锁任意一款独特 NFT，开启您的数字艺术收藏之旅
+              解锁任意一款独特 数藏，开启您的数字艺术收藏之旅
             </p>
           </motion.div>
 
@@ -415,7 +415,7 @@ const MysteryBoxMarket: NextPage = () => {
                     <div className="aspect-square overflow-hidden">
                       <img
                         src={image}
-                        alt={`NFT ${index + 1}`}
+                        alt={`数藏 ${index + 1}`}
                         className="w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110 group-hover:rotate-3"
                       />
                     </div>
@@ -424,7 +424,7 @@ const MysteryBoxMarket: NextPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
                       <div className="absolute bottom-0 left-0 right-0 p-6">
                         <p className="text-white font-bold text-lg mb-2">
-                          神秘 NFT #{index + 1}
+                          神秘 数藏 #{index + 1}
                         </p>
                         <p className="text-white/80 text-sm">
                           独特的数字艺术珍藏

@@ -26,7 +26,7 @@ const ProfilePage = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-300 via-base-100 to-base-300 relative overflow-hidden">
+    <div className="min-h-screen  relative overflow-hidden">
       {/* 动态粒子背景 */}
       {particles.map((particle, i) => (
         <motion.div
@@ -133,7 +133,7 @@ const ProfilePage = () => {
             transition={{ delay: 0.2 }}
             className="text-xl text-base-content/70"
           >
-            管理您的 NFT 资产
+            管理您的 数藏 资产
           </motion.p>
         </motion.div>
 
@@ -221,7 +221,7 @@ const ProfilePage = () => {
                   }}
                   style={{ backgroundSize: "200% 200%" }}
                 >
-                  我的 NFT 收藏
+                  我的 数藏 收藏
                 </motion.h2>
                 <MyHoldings />
               </motion.div>
@@ -281,7 +281,7 @@ const ProfilePage = () => {
               </motion.span>
             ))}
           </div>
-          <p className="text-sm">探索您的 NFT 资产世界</p>
+          <p className="text-sm">探索您的 数藏 资产世界</p>
         </motion.div>
       </div>
     </div>
