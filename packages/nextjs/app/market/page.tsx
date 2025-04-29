@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import type { NextPage } from "next";
 import { useAccount, usePublicClient } from "wagmi";
 import { formatEther } from "viem";
@@ -14,6 +14,120 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Float, ContactShadows, useGLTF } from "@react-three/drei";
+
+// GLB模型组件
+function GLBModel({ modelUrl }: { modelUrl: string }) {
+  const { scene } = useGLTF(modelUrl);
+  return (
+    <group>
+      <primitive 
+        object={scene} 
+        scale={1.5} 
+        position={[0, 0, 0]} 
+        rotation={[0, 0, 0]}
+      />
+    </group>
+  );
+}
+
+// 3D模型查看器组件
+function ModelViewer({ modelUrl }: { modelUrl: string }) {
+  const [hovering, setHovering] = useState(false);
+  
+  if (!modelUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-base-200">
+        <p className="text-base-content/70">无效的3D模型</p>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="w-full h-full relative" 
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {hovering && (
+        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs p-2 rounded-md z-10 backdrop-blur-sm pointer-events-none">
+          <p>👆 拖动: 旋转模型</p>
+          <p>🖱️ 滚轮: 放大/缩小</p>
+          <p>👉 右键拖动: 平移视图</p>
+        </div>
+      )}
+      <Canvas
+        camera={{ 
+          position: [0, 0, 3],
+          fov: 50,
+          near: 0.1,
+          far: 1000
+        }}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <OrbitControls
+          enablePan={true}
+          enableZoom={true}
+          enableRotate={true}
+          minDistance={1}
+          maxDistance={10}
+          autoRotate={!hovering}
+          autoRotateSpeed={1.5}
+          rotateSpeed={1.2}
+          zoomSpeed={1.2}
+          panSpeed={1.2}
+          makeDefault
+        />
+        <Float
+          rotationIntensity={0.2}
+          floatIntensity={0.2}
+          speed={1}
+        >
+          <Suspense fallback={
+            <mesh>
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshStandardMaterial color="gray" wireframe />
+            </mesh>
+          }>
+            <GLBModel modelUrl={modelUrl} />
+          </Suspense>
+        </Float>
+
+        <ContactShadows
+          opacity={0.4}
+          scale={10}
+          blur={2}
+          far={4}
+          resolution={256}
+          color="#000000"
+          position={[0, -2, 0]}
+        />
+
+        {/* 环境光照 */}
+        <ambientLight intensity={1.5} />
+        
+        {/* 主光源 */}
+        <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
+        <directionalLight position={[-5, 5, -5]} intensity={0.8} castShadow />
+        <directionalLight position={[0, 5, 0]} intensity={1} castShadow />
+        
+        {/* 补光 */}
+        <pointLight position={[5, 0, 5]} intensity={0.4} color="#ffd93d" />
+        <pointLight position={[-5, 0, -5]} intensity={0.4} color="#ffd93d" />
+        <pointLight position={[0, 0, 5]} intensity={0.4} color="#ff6b6b" />
+        <pointLight position={[0, 0, -5]} intensity={0.4} color="#ff6b6b" />
+
+        {/* 环境氛围光 */}
+        <hemisphereLight
+          intensity={0.5}
+          color="#ffffff"
+          groundColor="#666666"
+        />
+      </Canvas>
+    </div>
+  );
+}
 
 const ListNFTsPage: NextPage = () => {
   const { address: connectedAddress, isConnected, isConnecting } = useAccount();
@@ -28,6 +142,7 @@ const ListNFTsPage: NextPage = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 3;
   const publicClient = usePublicClient();
+  const [fileTypes, setFileTypes] = useState<Record<number, string | null>>({});
 
   // 获取所有上架的 NFT
   const { data: onSaleNfts } = useScaffoldReadContract({
@@ -40,7 +155,8 @@ const ListNFTsPage: NextPage = () => {
   // 初始化 NFT 列表和最大价格
   useEffect(() => {
     if (onSaleNfts) {
-      setListedNFTs(onSaleNfts);
+      // 使用扩展运算符复制数组，避免readonly错误
+      setListedNFTs([...onSaleNfts]);
       onSaleNfts.forEach((nft: any) => {
         fetchNFTDetails(nft.tokenUri, nft.tokenId); // 获取每个 NFT 的详细信息
       });
@@ -78,14 +194,29 @@ const ListNFTsPage: NextPage = () => {
         [tokenId]: metadata,
       }));
 
+      // 检查文件类型
+      if (metadata?.image) {
+        try {
+          const response = await fetch(metadata.image, { method: "HEAD" });
+          const contentType = response.headers.get("Content-Type");
+          setFileTypes(prev => ({ ...prev, [tokenId]: contentType }));
+        } catch (error) {
+          console.error(`无法获取文件类型: ${metadata.image}`, error);
+          // 如果HEAD请求失败，尝试通过文件扩展名判断
+          if (metadata.image.endsWith('.glb')) {
+            setFileTypes(prev => ({ ...prev, [tokenId]: "model/gltf-binary" }));
+          }
+        }
+      }
+
       // 动态提取属性
-      metadata?.attributes?.forEach(attr => {
+      metadata?.attributes?.forEach((attr: { trait_type: string; value: string | number }) => {
         setTraits(prev => {
           const newTraits = { ...prev };
           if (!newTraits[attr.trait_type]) {
             newTraits[attr.trait_type] = new Set();
           }
-          newTraits[attr.trait_type].add(attr.value);
+          newTraits[attr.trait_type].add(String(attr.value));
           return newTraits;
         });
       });
@@ -119,20 +250,22 @@ const ListNFTsPage: NextPage = () => {
       });
 
       // 等待交易被确认并获取回执
-      const receipt = await publicClient.waitForTransactionReceipt({ 
-        hash: tx as `0x${string}` 
-      });
+      if (publicClient) {
+        const receipt = await publicClient.waitForTransactionReceipt({ 
+          hash: tx as `0x${string}` 
+        });
 
-      // 保存gas记录
-      await saveGasRecord({
-        tx_hash: receipt?.transactionHash,
-        method_name: 'buyItem',
-        gas_used: receipt?.gasUsed,
-        gas_price: receipt?.effectiveGasPrice,
-        total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
-        user_address: connectedAddress as string,
-        block_number: receipt?.blockNumber
-      });
+        // 保存gas记录
+        await saveGasRecord({
+          tx_hash: receipt?.transactionHash,
+          method_name: 'buyItem',
+          gas_used: receipt?.gasUsed,
+          gas_price: receipt?.effectiveGasPrice,
+          total_cost: BigInt(receipt?.gasUsed * receipt?.effectiveGasPrice),
+          user_address: connectedAddress as string,
+          block_number: receipt?.blockNumber
+        });
+      }
 
       notification.success("NFT purchased successfully!");
     } catch (error) {
@@ -295,7 +428,12 @@ const ListNFTsPage: NextPage = () => {
               min={0}
               max={maxPrice}
               defaultValue={[0, maxPrice]}
-              onChange={(value) => setPriceRange({ min: value[0], max: value[1] })}
+              onChange={(value: any) => {
+                // 明确指定value类型为数组，避免类型错误
+                if (Array.isArray(value)) {
+                  setPriceRange({ min: value[0], max: value[1] });
+                }
+              }}
               className="mb-2"
             />
             <div className="flex justify-between mt-2 text-sm">
@@ -335,6 +473,10 @@ const ListNFTsPage: NextPage = () => {
             {currentNFTs.map((nft, index) => {
               const metadata = nftDetails[nft.tokenId];
               const priceETH = formatEther(nft.price);
+              
+              // 检查是否为GLB模型
+              const isGLBModel = fileTypes[nft.tokenId] === "model/gltf-binary" || 
+                (metadata?.image && metadata.image.endsWith('.glb'));
 
               return (
                 <motion.div
@@ -348,19 +490,28 @@ const ListNFTsPage: NextPage = () => {
                     hover:shadow-2xl hover:bg-base-100/60 transition-all duration-300"
                 >
                   <figure className="relative aspect-square overflow-hidden">
-                    <motion.img
-                      src={metadata?.image || "/placeholder.png"}
-                      alt={metadata?.name || "NFT Image"}
-                      className="w-full h-full object-cover transform-gpu"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    />
+                    {isGLBModel ? (
+                      // 3D模型展示
+                      <div className="w-full h-full">
+                        <ModelViewer modelUrl={metadata?.image || ""} />
+                      </div>
+                    ) : (
+                      // 普通图片展示
+                      <motion.img
+                        src={metadata?.image || "/placeholder.png"}
+                        alt={metadata?.name || "NFT Image"}
+                        className="w-full h-full object-cover transform-gpu"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </figure>
 
                   <div className="card-body relative z-10">
                     <h2 className="card-title text-xl font-bold">
                       {metadata?.name || "未命名数藏"}
+                      {isGLBModel && <span className="badge badge-primary ml-2">3D 模型</span>}
                     </h2>
                     <p className="text-2xl font-semibold text-primary">
                       {Number(priceETH)} ETH

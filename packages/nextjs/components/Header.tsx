@@ -30,10 +30,10 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "铸造数藏",
     href: "/create",
     icon: <WrenchScrewdriverIcon className="h-4 w-4" />,
-    subMenu: [
-      { label: "IPFS 查询", href: "/ipfsDownload" },
-      { label: "IPFS 上传", href: "/ipfsUpload" },
-    ],
+    //subMenu: [
+      //{ label: "IPFS 查询", href: "/ipfsDownload" },
+      //{ label: "IPFS 上传", href: "/ipfsUpload" },
+    //],
   },
   {
     label: "数藏市场",
@@ -63,11 +63,11 @@ export const menuLinks: HeaderMenuLink[] = [
       { label: "领取空投", href: "/claim" },
     ],
   },
-  {
-    label: "调试合约",
-    href: "/debug",
-    icon: <BugAntIcon className="h-4 w-4" />,
-  },
+  //{
+    //label: "调试合约",
+    //href: "/debug",
+    //icon: <BugAntIcon className="h-4 w-4" />,
+  //},
   
 ];
 

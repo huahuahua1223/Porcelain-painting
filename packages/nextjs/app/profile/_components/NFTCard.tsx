@@ -18,14 +18,14 @@ function GLBModel({ modelUrl }: { modelUrl: string }) {
       <primitive 
         object={scene} 
         scale={2} 
-        position={[0, -1, 0]} 
+        position={[0, 0, 0]} 
         rotation={[0, 5, 0]}
       />
     </group>
   );
 }
 
-// 创建3D查看器组件
+// 创建3D查看器组件 - 优化性能
 function ModelViewer({ modelUrl }: { modelUrl: string }) {
   return (
     <Canvas
@@ -35,7 +35,9 @@ function ModelViewer({ modelUrl }: { modelUrl: string }) {
         near: 0.1,
         far: 1000
       }}
-      style={{ width: "100%", height: "300px" }}
+      style={{ width: "100%", height: "240px" }}
+      frameloop="demand" // 只在需要时渲染帧，减少CPU/GPU消耗
+      dpr={[1, 1.5]} // 限制最大像素比，避免在高分辨率设备上过度渲染
     >
       <OrbitControls
         enablePan={true}
@@ -46,39 +48,11 @@ function ModelViewer({ modelUrl }: { modelUrl: string }) {
         autoRotate={false}
         makeDefault
       />
-      <Float
-        rotationIntensity={0.2}
-        floatIntensity={0.2}
-        speed={1}
-      >
-        <GLBModel modelUrl={modelUrl} />
-      </Float>
+      <GLBModel modelUrl={modelUrl} />
 
-      <ContactShadows
-        opacity={0.4}
-        scale={10}
-        blur={2}
-        far={4}
-        resolution={256}
-        color="#000000"
-        position={[0, -2, 0]}
-      />
-
-      {/* 环境光照 */}
+      {/* 简化光照系统 */}
       <ambientLight intensity={1.5} />
-      
-      {/* 主光源 */}
       <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
-      <directionalLight position={[-5, 5, -5]} intensity={0.8} castShadow />
-      <directionalLight position={[0, 5, 0]} intensity={1} castShadow />
-      
-      {/* 补光 */}
-      <pointLight position={[5, 0, 5]} intensity={0.4} color="#ffd93d" />
-      <pointLight position={[-5, 0, -5]} intensity={0.4} color="#ffd93d" />
-      <pointLight position={[0, 0, 5]} intensity={0.4} color="#ff6b6b" />
-      <pointLight position={[0, 0, -5]} intensity={0.4} color="#ff6b6b" />
-
-      {/* 环境氛围光 */}
       <hemisphereLight
         intensity={0.5}
         color="#ffffff"
@@ -381,7 +355,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
 
       {/* NFT 图片/模型显示 */}
       <div className="relative">
-        <div className={`nft-image-container ${fileType && fileType.includes("model/gltf-binary") ? "h-[300px]" : ""}`}>
+        <div className="nft-image-container h-60 overflow-hidden">
           {fileType && fileType.includes("model/gltf-binary") ? (
             // 使用新的3D查看器组件
             <ModelViewer modelUrl={nft.image} />
@@ -390,7 +364,7 @@ export const NFTCard = ({ nft, onNFTUpdate }: { nft: Collectible, onNFTUpdate: (
             <img
               src={nft.image}
               alt={`NFT-${nft.id}`}
-              className="h-60 min-w-full"
+              className="w-full h-full object-cover"
               onClick={() => handleViewNFTDetails(nft.id)}
             />
           ) : (

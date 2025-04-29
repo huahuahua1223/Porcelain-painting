@@ -1,7 +1,7 @@
 import { create } from "kubo-rpc-client";
 
-const pinataApiKey = "'ab1a2aade4e25af2c766';";
-const pinataSecretApiKey  = "'149cec1c3e77433af6ea3bdc11c3ba5ff0e349ea75d835efe6d476c8ffb88524';";
+const pinataApiKey = "'a3dc96d6004b308e990a';";
+const pinataSecretApiKey  = "'74ca3698bf6d974f330768dd956fbd7bf2922ddad65ae52bc430d424b5bd10e1';";
 
 export const ipfsClient = create({
   host: "api.pinata.cloud",

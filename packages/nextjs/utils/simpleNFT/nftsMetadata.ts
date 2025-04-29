@@ -133,6 +133,16 @@ const nftsMetadata = [
   },
 ];
 
-export type NFTMetaData = (typeof nftsMetadata)[number];
+export type NFTMetaData = {
+  description: string;
+  image: string;
+  name: string;
+  attributes: Array<{
+    trait_type: string;
+    value: string | number;
+  }>;
+  external_url?: string;
+  animation_url?: string;
+};
 
 export default nftsMetadata;

@@ -82,12 +82,73 @@ export const uploadFileToIPFS = async (file: File) => {
 
 export const getMetadataFromIPFS = async (tokenURI: string) => {
   try {
-    const response = await fetch(tokenURI);
-    if(!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // 增加认证头信息
+    const pinataAPIKEY = process.env.NEXT_PUBLIC_PINATA_API_KEY;
+    const pinataAPISECRET = process.env.NEXT_PUBLIC_PINATA_API_SECRET;
+    
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+    };
+
+    if (pinataAPIKEY) {
+      headers['pinata_api_key'] = pinataAPIKEY;
     }
-    const data = await response.json();
-    return data;
+
+    if (pinataAPISECRET) {
+      headers['pinata_secret_api_key'] = pinataAPISECRET;
+    }
+
+    try {
+      // 首先尝试直接获取
+      const response = await fetch(tokenURI, { headers });
+      if(response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (directError) {
+      console.warn("直接获取失败，将尝试通过gateway获取:", directError);
+    }
+    
+    // 如果直接获取失败，尝试通过gateway获取
+    // 检查URI是否是IPFS格式，提取CID
+    let cid = '';
+    if (tokenURI.includes('/ipfs/')) {
+      cid = tokenURI.split('/ipfs/')[1];
+    } else if (tokenURI.startsWith('ipfs://')) {
+      cid = tokenURI.replace('ipfs://', '');
+    }
+    
+    if (cid) {
+      // 定义多个备用网关
+      const gateways = [
+        `https://gateway.pinata.cloud/ipfs/${cid}`,
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://cloudflare-ipfs.com/ipfs/${cid}`,
+        `https://dweb.link/ipfs/${cid}`,
+        `https://ipfs.filebase.io/ipfs/${cid}`
+      ];
+      
+      // 尝试所有网关，一旦有一个成功就返回
+      for (const gatewayUrl of gateways) {
+        try {
+          console.log("尝试通过gateway获取:", gatewayUrl);
+          const gatewayResponse = await fetch(gatewayUrl);
+          if (gatewayResponse.ok) {
+            const data = await gatewayResponse.json();
+            console.log("成功从网关获取数据:", gatewayUrl);
+            return data;
+          }
+        } catch (gatewayError) {
+          console.warn(`网关 ${gatewayUrl} 获取失败:`, gatewayError);
+          // 继续尝试下一个网关
+        }
+      }
+      
+      // 所有网关都失败了
+      throw new Error(`所有IPFS网关尝试都失败了，无法获取 ${cid}`);
+    } else {
+      throw new Error(`无法解析IPFS CID: ${tokenURI}`);
+    }
   } catch (error) {
     console.error("Error fetching data from pinta:", error);
     throw error;

@@ -191,30 +191,7 @@ export const MyHoldings = () => {
   if (allCollectiblesLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <motion.div
-          className="relative"
-          animate={{
-            rotate: 360
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        >
-          <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <motion.div
-            className="absolute inset-0 rounded-full bg-primary/20"
-            animate={{
-              scale: [1, 1.5, 1],
-              opacity: [0.5, 0, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-            }}
-          />
-        </motion.div>
+        <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -224,52 +201,34 @@ export const MyHoldings = () => {
   return (
     <div className="space-y-8">
       {/* NFT 展示区域 */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="relative"
-      >
+      <div className="relative">
         {/* 背景装饰 */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl -z-10" />
 
         {/* NFT 网格 - 使用动态类名 */}
         <div className={gridClassName}>
-          <AnimatePresence mode="popLayout">
-            {items.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
-              >
-                <div>
-                  <NFTCard
-                    nft={item}
-                    onNFTUpdate={handleNFTUpdate}
-                  />
-                  <LoyaltyRewards
-                    tokenId={item.id}
-                    onRewardClaimed={handleNFTUpdate}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="group flex flex-col items-center"
+            >
+              <NFTCard
+                nft={item}
+                onNFTUpdate={handleNFTUpdate}
+              />
+              <LoyaltyRewards
+                tokenId={item.id}
+                onRewardClaimed={handleNFTUpdate}
+              />
+            </div>
+          ))}
         </div>
-      </motion.div>
+      </div>
 
-      {/* 分页控件 */}
+      {/* 分页控件 - 简化 */}
       {totalPages > 1 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-center items-center gap-2 py-6"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+        <div className="flex justify-center items-center gap-2 py-6">
+          <button
             className="btn btn-primary btn-sm"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
@@ -278,14 +237,12 @@ export const MyHoldings = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             上一页
-          </motion.button>
+          </button>
 
           <div className="flex gap-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-              <motion.button
+              <button
                 key={pageNum}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 className={`btn btn-sm ${
                   currentPage === pageNum
                     ? 'btn-primary'
@@ -294,13 +251,11 @@ export const MyHoldings = () => {
                 onClick={() => goToPage(pageNum)}
               >
                 {pageNum}
-              </motion.button>
+              </button>
             ))}
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             className="btn btn-primary btn-sm"
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
@@ -309,16 +264,12 @@ export const MyHoldings = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
       )}
 
       {/* NFT 统计信息 */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-base-100/50 backdrop-blur-md rounded-2xl p-4 text-center shadow-lg border border-base-300/50"
-      >
+      <div className="bg-base-100/50 backdrop-blur-md rounded-2xl p-4 text-center shadow-lg border border-base-300/50">
         <div className="flex items-center justify-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -327,15 +278,12 @@ export const MyHoldings = () => {
             总共 {nonFractionalizedNFTs.length} 个非碎片化 数藏
           </span>
         </div>
-      </motion.div>
+      </div>
 
       {/* 碎片操作组件 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <FractionOperations onOperationComplete={handleNFTUpdate} />
-      </motion.div>
+      </div>
     </div>
   );
 };

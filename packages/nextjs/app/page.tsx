@@ -6,19 +6,20 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const Home: NextPage = () => {
-  // 动画变体
+  // 简化动画变体
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2
+        staggerChildren: 0.1, // 减少延迟
+        delayChildren: 0.1
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { y: 10, opacity: 0 }, // 减小移动距离
     visible: { y: 0, opacity: 1 }
   };
 
@@ -32,17 +33,17 @@ const Home: NextPage = () => {
     {
       src: "/porcelain-2.jpg",
       alt: "现代瓷板画",
-      delay: 0.5
+      delay: 0.2
     },
     {
       src: "/porcelain-3.jpg",
       alt: "瓷板画工艺",
-      delay: 1
+      delay: 0.4
     },
     {
       src: "/porcelain-4.jpg",
       alt: "瓷板画展示",
-      delay: 1.5
+      delay: 0.6
     }
   ];
 
@@ -98,10 +99,9 @@ const Home: NextPage = () => {
               <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">平台简介</h2>
               <div className="grid grid-cols-1 gap-8">
                 <div>
-                  <h3 className="text-2xl font-semibold mb-4 text-gray-800">非遗瓷艺数字化</h3>
-                  <p className="text-gray-700 leading-relaxed text-lg">
-                    我们致力于将传统瓷板画艺术与现代区块链技术相结合，为每件作品提供唯一的数字身份认证。
-                    通过数字化确权，确保艺术品的真实性和所有权，让传统艺术在数字时代焕发新生。
+                  <h3 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">非遗瓷艺数字化</h3>
+                  <p className="text-base-content/80 leading-relaxed text-lg">
+                  我们将传统瓷板画艺术与区块链技术相结合，为每件作品赋予独一无二的数字身份，确保真实性与所有权。通过数字化确权，让经典艺术在新时代焕发全新生命力。
                   </p>
                 </div>
               </div>
@@ -113,67 +113,74 @@ const Home: NextPage = () => {
             <h2 className="text-2xl font-bold text-center mb-8">平台特色</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {platformFeatures.map((feature, index) => (
-                <motion.div
+                <div
                   key={index}
                   className="bg-base-100/30 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-base-content/5
-                    hover:shadow-2xl hover:bg-base-100/40 transition-all duration-300"
-                  whileHover={{ y: -5 }}
+                    hover:shadow-2xl hover:bg-base-100/40 hover:-translate-y-1 transition-all duration-200"
                 >
                   <span className="text-4xl mb-4 block">{feature.icon}</span>
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
                   <p className="text-base-content/70">{feature.description}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>
 
           {/* 行动按钮 */}
           <motion.div variants={itemVariants} className="text-center">
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-6">
               <Link href="/market">
-                <motion.button
-                  className="btn bg-[#DBA363] hover:bg-[#C89255] text-white border-0 btn-lg shadow-lg"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
+                  className="px-8 py-4 rounded-xl font-semibold text-white text-lg
+                  bg-gradient-to-r from-[#DBA363] to-[#E8BB7C] 
+                  hover:from-[#E8BB7C] hover:to-[#DBA363] 
+                  shadow-lg hover:shadow-[#DBA36366] 
+                  transform hover:scale-105 transition-all duration-300
+                  border border-[#F0D7AF]/20"
                 >
-                  浏览艺术品
-                </motion.button>
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                    </svg>
+                    浏览艺术品
+                  </span>
+                </button>
               </Link>
               <Link href="/create">
-                <motion.button
-                  className="btn bg-[#6B7A8C] hover:bg-[#596A7E] text-white border-0 btn-lg shadow-lg"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
+                  className="px-8 py-4 rounded-xl font-semibold text-white text-lg
+                  bg-gradient-to-r from-[#6B7A8C] to-[#8899AF] 
+                  hover:from-[#8899AF] hover:to-[#6B7A8C] 
+                  shadow-lg hover:shadow-[#6B7A8C66] 
+                  transform hover:scale-105 transition-all duration-300
+                  border border-[#A7B6C9]/20"
                 >
-                  创作与铸造
-                </motion.button>
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    创作与铸造
+                  </span>
+                </button>
               </Link>
             </div>
           </motion.div>
         </motion.div>
       </div>
 
-      {/* 下层：浮动图片 */}
+      {/* 下层：浮动图片 - 简化动画 */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {floatingImages.map((image, index) => (
-          <motion.div
+          <div
             key={index}
             className="absolute w-64 h-[650px]"
             style={{
               left: `${42 + (index - 1.5) * 21}%`,
-              top: '20%',
-              transform: 'translateY(-50%)'
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.3, 0.5, 0.3],
-              scale: [1, 1.05, 1]
-            }}
-            transition={{
-              duration: 4,
-              delay: image.delay,
-              repeat: Infinity,
-              ease: "easeInOut"
+              top: '50%',
+              transform: 'translateY(-50%)',
+              opacity: 0.4,
+              animation: `float${index + 1} ${6 + index * 0.5}s ease-in-out infinite`
             }}
           >
             <Image
@@ -181,21 +188,35 @@ const Home: NextPage = () => {
               alt={image.alt}
               fill
               className="object-cover rounded-2xl shadow-2xl"
+              loading="eager"
+              priority={index < 2}
             />
-            <motion.div
+            <div
               className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"
-              animate={{
-                opacity: [0.3, 0.5, 0.3]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
             />
-          </motion.div>
+          </div>
         ))}
       </div>
+
+      {/* 添加全局CSS动画 */}
+      <style jsx global>{`
+        @keyframes float1 {
+          0%, 100% { transform: translateY(-50%); }
+          50% { transform: translateY(-45%); }
+        }
+        @keyframes float2 {
+          0%, 100% { transform: translateY(-50%); }
+          50% { transform: translateY(-40%); }
+        }
+        @keyframes float3 {
+          0%, 100% { transform: translateY(-50%); }
+          50% { transform: translateY(-42%); }
+        }
+        @keyframes float4 {
+          0%, 100% { transform: translateY(-50%); }
+          50% { transform: translateY(-38%); }
+        }
+      `}</style>
     </div>
   );
 };

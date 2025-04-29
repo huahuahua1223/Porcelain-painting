@@ -883,7 +883,7 @@ const handleRoyaltyFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               className="btn btn-primary" 
               onClick={isBatchMode ? handleBatchMint : handleMintItem}
             >
-              {isBatchMode ? 'Batch Mint NFTs' : 'Mint NFT'}
+              {isBatchMode ? '批量铸造数藏' : '铸造数藏'}
             </button>
           )}
         </div>
